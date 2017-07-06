@@ -16,8 +16,8 @@ import edu.stanford.nlp.sempre.StringValue;
 import edu.stanford.nlp.sempre.interactive.DALExecutor;
 import edu.stanford.nlp.sempre.interactive.Item;
 import edu.stanford.nlp.sempre.interactive.World;
-import edu.stanford.nlp.sempre.interactive.voxelurn.Color;
-import edu.stanford.nlp.sempre.interactive.voxelurn.Voxel;
+import edu.stanford.nlp.sempre.interactive.robot.Color;
+import edu.stanford.nlp.sempre.interactive.robot.Voxel;
 import fig.basic.LispTree;
 import fig.basic.LogInfo;
 
@@ -33,7 +33,7 @@ public class DALExecutorTest {
   protected static void runFormula(DALExecutor executor, String formula, ContextValue context,
       Predicate<World> checker) {
     LogInfo.begin_track("formula: %s", formula);
-    DALExecutor.opts.worldType = "VoxelWorld";
+    DALExecutor.opts.worldType = "RobotWorld";
     Executor.Response response = executor.execute(Formulas.fromLispTree(LispTree.proto.parseFromString(formula)),
         context);
 
@@ -45,7 +45,7 @@ public class DALExecutorTest {
     LogInfo.end_track();
 
     if (checker != null) {
-      if (!checker.test(World.fromContext("VoxelWorld", getContext(jsonStr)))) {
+      if (!checker.test(World.fromContext("RobotWorld", getContext(jsonStr)))) {
         LogInfo.end_track();
         Assert.fail(jsonStr);
       }

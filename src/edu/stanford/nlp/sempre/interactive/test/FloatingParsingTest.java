@@ -53,8 +53,8 @@ public class FloatingParsingTest {
     FloatingParser.opts.defaultIsFloating = true;
     DALExecutor.opts.convertNumberValues  = true;
     DALExecutor.opts.printStackTrace = true;
-    DALExecutor.opts.worldType = "VoxelWorld";
-    Grammar.opts.inPaths = Lists.newArrayList("./interactive/voxelurn.grammar");
+    DALExecutor.opts.worldType = "RobotWorld";
+    Grammar.opts.inPaths = Lists.newArrayList("./interactive/robot.grammar");
     Grammar.opts.useApplyFn = "interactive.ApplyFn";
     Grammar.opts.binarizeRules = false;
 

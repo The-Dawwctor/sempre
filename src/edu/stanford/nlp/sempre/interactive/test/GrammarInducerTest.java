@@ -48,14 +48,14 @@ public class GrammarInducerTest {
     FloatingParser.opts.defaultIsFloating = true;
     DALExecutor.opts.convertNumberValues = true;
     DALExecutor.opts.printStackTrace = true;
-    DALExecutor.opts.worldType = "VoxelWorld";
+    DALExecutor.opts.worldType = "RobotWorld";
 
     Derivation.opts.showTypes = false;
     Derivation.opts.showRules = false;
     Derivation.opts.showCat = true;
 
     LanguageAnalyzer.opts.languageAnalyzer = "interactive.DALAnalyzer";
-    Grammar.opts.inPaths = Lists.newArrayList("./interactive/voxelurn.grammar");
+    Grammar.opts.inPaths = Lists.newArrayList("./interactive/robot.grammar");
     Grammar.opts.useApplyFn = "interactive.ApplyFn";
     Grammar.opts.binarizeRules = false;
     
