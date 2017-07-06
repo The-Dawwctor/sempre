@@ -1,4 +1,4 @@
-package edu.stanford.nlp.sempre.interactive.voxelurn;
+package edu.stanford.nlp.sempre.interactive.robot;
 
 import java.util.HashSet;
 import java.util.LinkedList;
@@ -18,7 +18,7 @@ import edu.stanford.nlp.sempre.interactive.World;
 import fig.basic.Option;
 
 // the world of stacks
-public class VoxelWorld extends World {
+public class RobotWorld extends World {
   public static class Options {
     @Option(gloss = "maximum number of cubes to convert")
     public int maxBlocks = 1024 ^ 2;
@@ -28,7 +28,7 @@ public class VoxelWorld extends World {
 
   public final static String SELECT = "S";
 
-  public static VoxelWorld fromContext(ContextValue context) {
+  public static RobotWorld fromContext(ContextValue context) {
     if (context == null || context.graph == null) {
       return fromJSON("[[3,3,1,\"gray\",[\"S\"]],[4,4,1,\"blue\",[]]]");
     }
@@ -56,7 +56,7 @@ public class VoxelWorld extends World {
   }
 
   @SuppressWarnings("unchecked")
-  public VoxelWorld(Set<Item> blockset) {
+  public RobotWorld(Set<Item> blockset) {
     super();
     this.allItems = blockset;
     this.selected = blockset.stream().filter(b -> ((Voxel) b).names.contains(SELECT)).collect(Collectors.toSet());
@@ -83,14 +83,14 @@ public class VoxelWorld extends World {
     // o+","+n);
   }
 
-  private static VoxelWorld fromJSON(String wallString) {
+  private static RobotWorld fromJSON(String wallString) {
     @SuppressWarnings("unchecked")
     List<List<Object>> cubestr = Json.readValueHard(wallString, List.class);
     Set<Item> cubes = cubestr.stream().map(c -> {
       return Voxel.fromJSONObject(c);
     }).collect(Collectors.toSet());
     // throw new RuntimeException(a.toString()+a.get(1).toString());
-    VoxelWorld world = new VoxelWorld(cubes);
+    RobotWorld world = new RobotWorld(cubes);
     // world.previous.addAll(world.selected);
     // we can only use previous within a block;
     return world;

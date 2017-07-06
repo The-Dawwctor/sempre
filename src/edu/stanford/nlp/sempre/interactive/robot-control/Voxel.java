@@ -1,4 +1,4 @@
-package edu.stanford.nlp.sempre.interactive.voxelurn;
+package edu.stanford.nlp.sempre.interactive.robot;
 
 import java.util.HashSet;
 import java.util.List;

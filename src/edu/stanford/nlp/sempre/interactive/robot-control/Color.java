@@ -1,4 +1,4 @@
-package edu.stanford.nlp.sempre.interactive.voxelurn;
+package edu.stanford.nlp.sempre.interactive.robot;
 
 public class Color {
   enum BasicColor {

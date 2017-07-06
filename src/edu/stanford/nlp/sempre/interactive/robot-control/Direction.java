@@ -1,4 +1,4 @@
-package edu.stanford.nlp.sempre.interactive.voxelurn;
+package edu.stanford.nlp.sempre.interactive.robot;
 
 enum Direction {
   Top, Bot, Left, Right, Front, Back, None;
