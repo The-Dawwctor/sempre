@@ -6,7 +6,7 @@ enum Direction {
     dir = dir.toLowerCase();
     if (dir.equals("up") || dir.equals("top"))
       return Direction.Top;
-    if (dir.equals("down") || dir.equals("bot"))
+    if (dir.equals("down") || dir.equals("bot") || dir.equals("bottom"))
       return Direction.Bot;
     if (dir.equals("left"))
       return Direction.Left;
