@@ -39,7 +39,6 @@ public class DALExecutor extends Executor {
     public String classPathPrefix = "edu.stanford.nlp.sempre";
 
     @Option(gloss = "The type of world used")
-    //public String worldType = "VoxelWorld";
     public String worldType = "RobotWorld";
 
     @Option(gloss = "the maximum number of primitive calls until we stop executing")

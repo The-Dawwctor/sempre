@@ -48,7 +48,7 @@ public class RobotWorld extends World {
   public Set<Item> origin() {
     for (Item i : allItems) {
       Voxel b = (Voxel) i;
-      if (b.col == 0 && b.row == 0 & b.height == 0)
+      if (b.col == 0 && b.row == 0 && b.height == 0)
         return Sets.newHashSet(b);
     }
     Voxel basecube = new Voxel(0, 0, 0, Color.Fake.toString());
