@@ -76,5 +76,4 @@ public abstract class World {
   public Set<Item> empty() {
     return new HashSet<>();
   }
-
 }

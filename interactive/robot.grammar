@@ -7,6 +7,7 @@
 (def @base base)
 (def @add add)
 (def @move move)
+(def @goal goal)
 
 # syntactic sugar
 (def @veryx veryx)
@@ -27,6 +28,7 @@
 (rule $Action (move $Direction) (lambda d (: @move (var d))) (anchored 1))
 
 # primitive actions with arguments
+(rule $Action (goal $Number $Number $Number) (lambda x (lambda y (lambda z (: @goal (var x) (var y) (var z))))) (anchored 1))
 
 # cube to cube relations
 (rule $Set ($Direction of $Set) (lambda d (lambda s
