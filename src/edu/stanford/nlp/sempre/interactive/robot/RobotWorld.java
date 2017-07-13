@@ -30,7 +30,7 @@ public class RobotWorld extends World {
 
     public static RobotWorld fromContext(ContextValue context) {
 	if (context == null || context.graph == null) {
-	    return fromJSON("[[3,3,1,\"gray\",false,[\"S\"]],[4,4,1,\"blue\",false,[]]]");
+	    return fromJSON("[[[\"S\"], 3,3,1,\"gray\",false],[[],4,4,1,\"blue\",false]]");
 	}
 	NaiveKnowledgeGraph graph = (NaiveKnowledgeGraph) context.graph;
 	String wallString = ((StringValue) graph.triples.get(0).e1).value;
@@ -94,7 +94,6 @@ public class RobotWorld extends World {
 
     @Override
     public Set<Item> has(String rel, Set<Object> values) {
-	// LogInfo.log(values);
 	return this.allItems.stream().filter(i -> values.contains(i.get(rel))).collect(Collectors.toSet());
     }
 
@@ -109,7 +108,7 @@ public class RobotWorld extends World {
 	keyConsistency();
     }
 
-    // if selected is no longer in all, make it fake colored, and add to all;
+    // if selected no longer in all, make it fake colored and add to all;
     // likewise, if some fake colored block is no longer selected, remove it
     @Override
     public void merge() {
@@ -117,10 +116,8 @@ public class RobotWorld extends World {
 	allItems.removeIf(c -> ((PEPoint) c).color.equals(Color.Fake) && !this.selected.contains(c));
 	allItems.addAll(selected);
 	if (allItems.size() > opts.maxBlocks) {
-	    throw new RuntimeException(
-				       String.format("Number of blocks (%d) exceeds the upperlimit %d", allItems.size(), opts.maxBlocks));
+	    throw new RuntimeException(String.format("Number of blocks (%d) exceeds the upperlimit %d", allItems.size(), opts.maxBlocks));
 	}
-	// keyConsistency();
     }
 
     // block world specific actions, overriding move

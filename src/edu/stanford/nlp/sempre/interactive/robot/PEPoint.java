@@ -112,46 +112,52 @@ public class PEPoint extends Point {
 
     @Override
     public void update(String property, Object value) {
-	// updating with empty set does nothing, throw something?
-	if (value instanceof Set && ((Set) value).size() == 0)
-	    return;
-	if (value instanceof Set && ((Set) value).size() == 1)
-	    value = ((Set) value).iterator().next();
+	if (value instanceof Set) {
+	    Set valueSet = (Set) value;
+	    if (valueSet.size() == 0) {
+		// updating with empty set does nothing, throw something?
+		return;
+	    } else if (valueSet.size() == 1) {
+		value = valueSet.iterator().next();
+	    } else {
+		throw new RuntimeException(String.format("Updating %s to %s not allowed," +
+							 " which has %d values, but a property can only have 1 value. ",
+							 property, value.toString(), valueSet.size()));
+	    }
+	}
 
-	if (property.equals("height") && value instanceof Integer)
-	    this.height = (Integer) value;
-	else if (property.equals("row") && value instanceof Integer)
-	    this.row = (Integer) value;
-	else if (property.equals("col") && value instanceof Integer)
-	    this.height = (Integer) value;
-	else if (property.equals("attract") && value instanceof Boolean)
-	    this.attract = (Boolean) attract;
-	else if (property.equals("color") && value instanceof String)
+	if (value instanceof Integer) {
+	    if (property.equals("height"))
+		this.height = (Integer) value;
+	    else if (property.equals("row"))
+		this.row = (Integer) value;
+	    else if (property.equals("col"))
+		this.height = (Integer) value;
+	} else if (property.equals("color") && value instanceof String) {
 	    this.color = Color.fromString(value.toString());
-	else if (value instanceof Set)
-	    throw new RuntimeException(String.format("Updating %s to %s is not allowed," +
-						     " which has %d values, but a property can only have 1 value. ",
-						     property, value.toString(), ((Set) value).size()));
-	else
-	    throw new RuntimeException(String.format("Updating property %s to %s is not allowed! (type %s is not expected for %s) ",
+	} else if (property.equals("attract") && value instanceof Boolean) {
+	    this.attract = (Boolean) attract;
+	} else {
+	    throw new RuntimeException(String.format("Updating property %s to %s not allowed! (type %s not expected for %s) ",
 						     property, value.toString(), value.getClass(), property));
+	}
     }
 
     @SuppressWarnings("unchecked")
     public static PEPoint fromJSONObject(List<Object> props) {
 	PEPoint retcube = new PEPoint();
-	retcube.row = ((Integer) props.get(0));
-	retcube.col = ((Integer) props.get(1));
-	retcube.height = ((Integer) props.get(2));
-	retcube.color = Color.fromString(((String) props.get(3)));
-	retcube.attract = ((Boolean) props.get(4));
-	retcube.names.addAll((List<String>) props.get(5));
+	retcube.names.addAll((List<String>) props.get(0));
+	retcube.row = ((Integer) props.get(1));
+	retcube.col = ((Integer) props.get(2));
+	retcube.height = ((Integer) props.get(3));
+	retcube.color = Color.fromString(((String) props.get(4)));
+	retcube.attract = ((Boolean) props.get(5));
 	return retcube;
     }
 
     public Object toJSON() {
 	List<String> globalNames = names.stream().collect(Collectors.toList());
-	List<Object> cube = Lists.newArrayList(row, col, height, color.toString(), attract, globalNames);
+	List<Object> cube = Lists.newArrayList(globalNames, row, col, height, color.toString(), attract);
 	return cube;
     }
 
