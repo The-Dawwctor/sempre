@@ -17,6 +17,7 @@ public class PEPoint extends Point {
     public PEPoint(int row, int col, int height, String color, boolean attract) {
 	super(row, col, height, color);
 	this.attract = attract;
+	this.names.add("PEPoint");
     }
     
     public PEPoint(int row, int col, int height, String color) {
@@ -26,12 +27,14 @@ public class PEPoint extends Point {
     public PEPoint() {
 	super();
 	this.attract = false;
+	this.names.add("PEPoint");
     }
 
     // used as a key
     public PEPoint(int row, int col, int height) {
 	super(row, col, height);
 	this.attract = false;
+	this.names.add("PEPoint");
     }
 
     public PEPoint move(Direction dir) {

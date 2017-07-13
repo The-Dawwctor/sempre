@@ -14,15 +14,18 @@ import edu.stanford.nlp.sempre.interactive.robot.Point;
 public class OpPoint extends Point {
     public OpPoint() {
 	super();
+	this.names.add("OpPoint");
     }
 
     // used as key
     public OpPoint(int row, int col, int height) {
 	super(row, col, height);
+	this.names.add("OpPoint");
     }
 
     public OpPoint(int row, int col, int height, String color) {
 	super(row, col, height, color);
+	this.names.add("OpPoint");
     }
     
     public OpPoint move(Direction dir) {

@@ -20,6 +20,7 @@ public class Point extends Item {
 	this.height = 0;
 	this.color = Color.fromString("None");
 	this.names = new HashSet<>();
+	this.names.add("Point");
     }
 
     // used as key
