@@ -63,11 +63,10 @@ public class RobotWorld extends World {
 	this.selected.forEach(i -> i.names.remove(SELECT));
     }
 
-    // we only use names S to communicate with the client, internally its just the
-    // select variable
+    // only use names S to communicate with client, internally it's just select variable
     @Override
     public String toJSON() {
-	// selected thats no longer in the world gets nothing
+	// selected that's no longer in the world gets nothing
 	// allitems.removeIf(c -> ((Block)c).color == CubeColor.Fake &&
 	// !this.selected.contains(c));
 	// allitems.stream().filter(c -> selected.contains(c)).forEach(i ->
@@ -85,14 +84,11 @@ public class RobotWorld extends World {
 
     private static RobotWorld fromJSON(String wallString) {
 	@SuppressWarnings("unchecked")
-	    List<List<Object>> cubestr = Json.readValueHard(wallString, List.class);
-	Set<Item> cubes = cubestr.stream().map(c -> {
+	List<List<Object>> itemstr = Json.readValueHard(wallString, List.class);
+	Set<Item> items = itemstr.stream().map(c -> {
 		return PEPoint.fromJSONObject(c);
 	    }).collect(Collectors.toSet());
-	// throw new RuntimeException(a.toString()+a.get(1).toString());
-	RobotWorld world = new RobotWorld(cubes);
-	// world.previous.addAll(world.selected);
-	// we can only use previous within a block;
+	RobotWorld world = new RobotWorld(items);
 	return world;
     }
 

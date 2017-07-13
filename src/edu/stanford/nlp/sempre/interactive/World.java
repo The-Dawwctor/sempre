@@ -26,8 +26,8 @@ public abstract class World {
     throw new RuntimeException("World does not exist: " + worldname);
   }
 
-  // there are some annoying issues with mutable objects.
-  // The current strategy is to keep allitems up to date on each mutable
+  // some annoying issues with mutable objects.
+  // current strategy is to keep allitems up to date on each mutable
   // operation
   public abstract String toJSON();
 

@@ -11,30 +11,21 @@ import edu.stanford.nlp.sempre.Json;
 import edu.stanford.nlp.sempre.interactive.Item;
 
 //individual stacks
-public class PEPoint extends Item {
-    boolean attract;
-
-    public PEPoint(int row, int col, int height, String color, boolean attract) {
-	super(row, col, height, color);
-	this.attract = attract;
-    }
-    
-    public PEPoint(int row, int col, int height, String color) {
-	this(row, col, height, color, false);
-    }
-    
-    public PEPoint() {
+public class OpPoint extends Item {
+    public OpPoint() {
 	super();
-	this.attract = false;
     }
 
     // used as a key
-    public PEPoint(int row, int col, int height) {
+    public OpPoint(int row, int col, int height) {
 	super(row, col, height);
-	this.attract = false;
     }
 
-    public PEPoint move(Direction dir) {
+    public OpPoint(int row, int col, int height, String color) {
+	super(row, col, height, color);
+    }
+    
+    public OpPoint move(Direction dir) {
 	switch (dir) {
 	case Back:
 	    this.row += 1;
@@ -60,8 +51,8 @@ public class PEPoint extends Item {
 	return this;
     }
 
-    public PEPoint copy(Direction dir) {
-	PEPoint c = this.clone();
+    public OpPoint copy(Direction dir) {
+	OpPoint c = this.clone();
 	switch (dir) {
 	case Back:
 	    c.row += 1;
@@ -96,8 +87,6 @@ public class PEPoint extends Item {
 	    propval = new Integer(this.row);
 	else if (property.equals("col"))
 	    propval = new Integer(this.col);
-	else if (property.equals("attract"))
-	    propval = new Boolean(this.attract);
 	else if (property.equals("color"))
 	    propval = this.color.toString().toLowerCase();
 	else if (property.equals("name"))
@@ -121,8 +110,6 @@ public class PEPoint extends Item {
 	    this.row = (Integer) value;
 	else if (property.equals("col") && value instanceof Integer)
 	    this.height = (Integer) value;
-	else if (property.equals("attract") && value instanceof Boolean)
-	    this.attract = (Boolean) attract;
 	else if (property.equals("color") && value instanceof String)
 	    this.color = Color.fromString(value.toString());
 	else if (value instanceof Set)
@@ -135,37 +122,36 @@ public class PEPoint extends Item {
     }
 
     @SuppressWarnings("unchecked")
-    public static PEPoint fromJSON(String json) {
+    public static OpPoint fromJSON(String json) {
 	List<Object> props = Json.readValueHard(json, List.class);
 	return fromJSONObject(props);
     }
 
     @SuppressWarnings("unchecked")
-    public static PEPoint fromJSONObject(List<Object> props) {
-	PEPoint retcube = new PEPoint();
+    public static OpPoint fromJSONObject(List<Object> props) {
+	OpPoint retcube = new OpPoint();
 	retcube.row = ((Integer) props.get(0));
 	retcube.col = ((Integer) props.get(1));
 	retcube.height = ((Integer) props.get(2));
 	retcube.color = Color.fromString(((String) props.get(3)));
-	retcube.attract = ((Boolean) props.get(4));
-	retcube.names.addAll((List<String>) props.get(5));
+	retcube.names.addAll((List<String>) props.get(4));
 	return retcube;
     }
 
     public Object toJSON() {
 	List<String> globalNames = names.stream().collect(Collectors.toList());
-	List<Object> cube = Lists.newArrayList(row, col, height, color.toString(), attract, globalNames);
+	List<Object> cube = Lists.newArrayList(row, col, height, color.toString(), globalNames);
 	return cube;
     }
 
     @Override
-    public PEPoint clone() {
-	return new PEPoint(this.row, this.col, this.height, this.color.toString(), this.attract);
+    public OpPoint clone() {
+	return new OpPoint(this.row, this.col, this.height, this.color.toString());
     }
 
     @Override
     public int hashCode() {
-	final int prime = 19;
+	final int prime = 17;
 	int result = 1;
 	result = prime * result + col;
 	result = prime * result + height;
@@ -181,7 +167,7 @@ public class PEPoint extends Item {
 	    return false;
 	if (getClass() != obj.getClass())
 	    return false;
-	PEPoint other = (PEPoint) obj;
+	OpPoint other = (OpPoint) obj;
 
 	if (col != other.col)
 	    return false;
