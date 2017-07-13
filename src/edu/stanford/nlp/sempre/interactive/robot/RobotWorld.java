@@ -19,13 +19,6 @@ import fig.basic.Option;
 
 // the world of stacks
 public class RobotWorld extends World {
-    public static class Options {
-	@Option(gloss = "maximum number of cubes to convert")
-	public int maxBlocks = 1024 ^ 2;
-    }
-
-    public static Options opts = new Options();
-
     public final static String SELECT = "S";
 
     public static RobotWorld fromContext(ContextValue context) {
@@ -38,7 +31,7 @@ public class RobotWorld extends World {
     }
 
     public void base(int x, int y) {
-	PEPoint basecube = new PEPoint(x, y, 0, Color.Fake.toString());
+	Point basecube = new Point(x, y, 0, Color.Fake.toString());
 	this.allItems = new HashSet<>(this.allItems);
 	this.selected = new HashSet<>(this.selected);
 	allItems.add(basecube);
@@ -47,11 +40,11 @@ public class RobotWorld extends World {
 
     public Set<Item> origin() {
 	for (Item i : allItems) {
-	    PEPoint b = (PEPoint) i;
+	    Point b = (Point) i;
 	    if (b.col == 0 && b.row == 0 && b.height == 0)
 		return Sets.newHashSet(b);
 	}
-	PEPoint basecube = new PEPoint(0, 0, 0, Color.Fake.toString());
+	Point basecube = new Point(0, 0, 0, Color.Fake.toString());
 	return Sets.newHashSet(basecube);
     }
 
@@ -59,34 +52,33 @@ public class RobotWorld extends World {
     public RobotWorld(Set<Item> blockset) {
 	super();
 	this.allItems = blockset;
-	this.selected = blockset.stream().filter(b -> ((PEPoint) b).names.contains(SELECT)).collect(Collectors.toSet());
+	this.selected = blockset.stream().filter(b -> ((Point) b).names.contains(SELECT)).collect(Collectors.toSet());
 	this.selected.forEach(i -> i.names.remove(SELECT));
     }
 
     // only use names S to communicate with client, internally it's just select variable
     @Override
     public String toJSON() {
-	// selected that's no longer in the world gets nothing
-	// allitems.removeIf(c -> ((Block)c).color == CubeColor.Fake &&
-	// !this.selected.contains(c));
-	// allitems.stream().filter(c -> selected.contains(c)).forEach(i ->
-	// i.names.add(SELECT));
-
 	return Json.writeValueAsStringHard(allItems.stream().map(c -> {
-		    PEPoint b = ((PEPoint) c).clone();
+		    Point b = ((Point) c).clone();
 		    if (selected.contains(b))
 			b.names.add("S");
 		    return b.toJSON();
 		}).collect(Collectors.toList()));
-	// return this.worldlist.stream().map(c -> c.toJSON()).reduce("", (o, n) ->
-	// o+","+n);
     }
 
     private static RobotWorld fromJSON(String wallString) {
 	@SuppressWarnings("unchecked")
 	List<List<Object>> itemstr = Json.readValueHard(wallString, List.class);
 	Set<Item> items = itemstr.stream().map(c -> {
-		return PEPoint.fromJSONObject(c);
+		List<String> types = (List) c.get(0);
+		if (types.contains("PEPoint")) {
+		    return PEPoint.fromJSONObject(c);
+		} else if (types.contains("OpPoint")) {
+		    return OpPoint.fromJSONObject(c);
+		} else {
+		    return Point.fromJSONObject(c);
+		}
 	    }).collect(Collectors.toSet());
 	RobotWorld world = new RobotWorld(items);
 	return world;
@@ -112,20 +104,15 @@ public class RobotWorld extends World {
     // likewise, if some fake colored block is no longer selected, remove it
     @Override
     public void merge() {
-	Sets.difference(selected, allItems).forEach(i -> ((PEPoint) i).color = Color.Fake);
-	allItems.removeIf(c -> ((PEPoint) c).color.equals(Color.Fake) && !this.selected.contains(c));
+	Sets.difference(selected, allItems).forEach(i -> ((Point) i).color = Color.Fake);
+	allItems.removeIf(c -> ((Point) c).color.equals(Color.Fake) && !this.selected.contains(c));
 	allItems.addAll(selected);
-	if (allItems.size() > opts.maxBlocks) {
-	    throw new RuntimeException(String.format("Number of blocks (%d) exceeds the upperlimit %d", allItems.size(), opts.maxBlocks));
-	}
     }
 
     // block world specific actions, overriding move
     public void move(String dir, Set<Item> selected) {
-	// allitems.removeAll(selected);
-	selected.forEach(b -> ((PEPoint) b).move(Direction.fromString(dir)));
+	selected.forEach(b -> ((Point) b).move(Direction.fromString(dir)));
 	keyConsistency();
-	// allitems.addAll(selected); // this is not overriding
     }
 
     public void add(String colorstr, String dirstr, Set<Item> selected) {
@@ -133,11 +120,11 @@ public class RobotWorld extends World {
 	Color color = Color.fromString(colorstr);
 
 	if (dir == Direction.None) { // add here
-	    selected.forEach(b -> ((PEPoint) b).color = color);
+	    selected.forEach(b -> ((Point) b).color = color);
 	} else {
 	    Set<Item> extremeCubes = extremeCubes(dir, selected);
 	    this.allItems.addAll(extremeCubes.stream().map(c -> {
-			PEPoint d = ((PEPoint) c).copy(dir);
+			Point d = ((Point) c).copy(dir);
 			d.color = color;
 			return d;
 		    }).collect(Collectors.toList()));
@@ -147,8 +134,15 @@ public class RobotWorld extends World {
     // set goal position in coordinate system
     // TODO: CHANGE INTEGER COORDINATES TO DOUBLES AS SOON AS SETTING MADE CONTINUOUS
     public void goal(int x, int y, int z) {
-	PEPoint newPEPoint = new PEPoint(x, y, z, "red");
-	this.allItems.add(newPEPoint);
+	PEPoint newGoal = new PEPoint(x, y, z, "green", true);
+	this.allItems.add(newGoal);
+    }
+
+    // set obstacle position in coordinate system
+    // TODO: CHANGE INTEGER COORDINATES TO DOUBLES AS SOON AS SETTING MADE CONTINUOUS
+    public void block(int x, int y, int z) {
+	PEPoint newObstacle = new PEPoint(x, y, z, "red", false);
+	this.allItems.add(newObstacle);
     }
     
     // get cubes at extreme positions
@@ -177,7 +171,7 @@ public class RobotWorld extends World {
     public Set<Item> adj(String dirstr, Set<Item> selected) {
 	Direction dir = Direction.fromString(dirstr);
 	Set<Item> selectors = selected.stream().map(c -> {
-		PEPoint b = ((PEPoint) c).copy(dir);
+		Point b = ((Point) c).copy(dir);
 		b.color = Color.Fake;
 		return b;
 	    }).collect(Collectors.toSet());
@@ -189,15 +183,15 @@ public class RobotWorld extends World {
 	return actual;
     }
 
-    public static Set<Item> argmax(Function<PEPoint, Integer> f, Set<Item> items) {
+    public static Set<Item> argmax(Function<Point, Integer> f, Set<Item> items) {
 	int maxvalue = Integer.MIN_VALUE;
 	for (Item i : items) {
-	    int cvalue = f.apply((PEPoint) i);
+	    int cvalue = f.apply((Point) i);
 	    if (cvalue > maxvalue)
 		maxvalue = cvalue;
 	}
 	final int maxValue = maxvalue;
-	return items.stream().filter(c -> f.apply((PEPoint) c) >= maxValue).collect(Collectors.toSet());
+	return items.stream().filter(c -> f.apply((Point) c) >= maxValue).collect(Collectors.toSet());
     }
 
     @Override
@@ -209,7 +203,7 @@ public class RobotWorld extends World {
     private Set<Item> extremeCubes(Direction dir, Set<Item> selected) {
 	Set<Item> realCubes = realBlocks(allItems);
 	return selected.stream().map(c -> {
-		PEPoint d = (PEPoint) c;
+		Point d = (Point) c;
 		while (realCubes.contains(d.copy(dir)))
 		    d = d.copy(dir);
 		return d;
@@ -230,6 +224,6 @@ public class RobotWorld extends World {
     }
 
     private Set<Item> realBlocks(Set<Item> all) {
-	return all.stream().filter(b -> !((PEPoint) b).color.equals(Color.Fake)).collect(Collectors.toSet());
+	return all.stream().filter(b -> !((Point) b).color.equals(Color.Fake)).collect(Collectors.toSet());
     }
 }

@@ -27,59 +27,6 @@ public class OpPoint extends Point {
 	super(row, col, height, color);
 	this.names.add("OpPoint");
     }
-    
-    public OpPoint move(Direction dir) {
-	switch (dir) {
-	case Back:
-	    this.row += 1;
-	    break;
-	case Front:
-	    this.row -= 1;
-	    break;
-	case Left:
-	    this.col += 1;
-	    break;
-	case Right:
-	    this.col -= 1;
-	    break;
-	case Top:
-	    this.height += 1;
-	    break;
-	case Bot:
-	    this.height -= 1;
-	    break;
-	case None:
-	    break;
-	}
-	return this;
-    }
-
-    public OpPoint copy(Direction dir) {
-	OpPoint c = this.clone();
-	switch (dir) {
-	case Back:
-	    c.row += 1;
-	    break;
-	case Front:
-	    c.row -= 1;
-	    break;
-	case Left:
-	    c.col += 1;
-	    break;
-	case Right:
-	    c.col -= 1;
-	    break;
-	case Top:
-	    c.height += 1;
-	    break;
-	case Bot:
-	    c.height -= 1;
-	    break;
-	case None:
-	    break;
-	}
-	return c;
-    }
 
     @Override
     public OpPoint clone() {

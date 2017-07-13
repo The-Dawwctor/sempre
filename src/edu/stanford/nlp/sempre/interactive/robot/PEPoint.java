@@ -3,7 +3,6 @@ package edu.stanford.nlp.sempre.interactive.robot;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
-import java.util.stream.Collectors;
 
 import org.testng.collections.Lists;
 
@@ -35,59 +34,6 @@ public class PEPoint extends Point {
 	super(row, col, height);
 	this.attract = false;
 	this.names.add("PEPoint");
-    }
-
-    public PEPoint move(Direction dir) {
-	switch (dir) {
-	case Back:
-	    this.row += 1;
-	    break;
-	case Front:
-	    this.row -= 1;
-	    break;
-	case Left:
-	    this.col += 1;
-	    break;
-	case Right:
-	    this.col -= 1;
-	    break;
-	case Top:
-	    this.height += 1;
-	    break;
-	case Bot:
-	    this.height -= 1;
-	    break;
-	case None:
-	    break;
-	}
-	return this;
-    }
-
-    public PEPoint copy(Direction dir) {
-	PEPoint c = this.clone();
-	switch (dir) {
-	case Back:
-	    c.row += 1;
-	    break;
-	case Front:
-	    c.row -= 1;
-	    break;
-	case Left:
-	    c.col += 1;
-	    break;
-	case Right:
-	    c.col -= 1;
-	    break;
-	case Top:
-	    c.height += 1;
-	    break;
-	case Bot:
-	    c.height -= 1;
-	    break;
-	case None:
-	    break;
-	}
-	return c;
     }
 
     @Override
@@ -156,9 +102,10 @@ public class PEPoint extends Point {
     }
 
     public Object toJSON() {
-	List<String> globalNames = names.stream().collect(Collectors.toList());
-	List<Object> cube = Lists.newArrayList(globalNames, row, col, height, color.toString(), attract);
-	return cube;
+	List<Object> pepoint = (List<Object>)super.toJSON();
+	List<Object> additional = Lists.newArrayList(attract);
+	pepoint.add(attract);
+	return pepoint;
     }
 
     @Override
