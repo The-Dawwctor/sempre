@@ -1,12 +1,10 @@
 # README
 
-This `interactive` package is the code for our paper
-*Naturalizing a programming language through interaction* (ACL 2017).
-A live demo is at [www.voxelurn.com](http://www.voxelurn.com).
+This `interactive` package is the preliminary code for utilizing Natural Language Processing to control robots.
 
-voxelurn is a language interface to a voxel world.
+NLP Robot Control (NRC) is a language interface to operational space robot control.
 This server handles commands used to learn from definitions, and other interactive queries.
-In this setting, the system begin with the dependency-based action language (`dal.grammar`), and gradually expand the language through interacting with it users.
+In this setting, the system begin with the dependency-based action language (`dal.grammar`), and gradually expand the language through interacting with the user.
 
 ## Overview of the components
 
@@ -15,21 +13,22 @@ In this setting, the system begin with the dependency-based action language (`da
 The `edu.stanford.nlp.sempre.interactive` package live in this repo contains code for
 * running interactive commands (such as query, accept, reject, definition)
 * executor for the dependency-based action (DAL) language
-* voxelurn specific code in `edu.stanford.nlp.sempre.interactive.voxelurn` for actually   generating the voxel and manipulating them
+* NRC specific code in `edu.stanford.nlp.sempre.interactive.robot` for actually generating the points and manipulating them.
+
 Utilties and resources such as the grammar and run script are in this directory, and the code in in the regular `sempre/src` directory.
 
-### voxelurn client
+### NRC client
 
-It queries the server, and renders the voxels to a browser. A live version is at [www.voxelurn.com](http://www.voxelurn.com), which queries our server. You can also find a client for localhost at [http://local.voxelurn.com](http://local.voxelurn.com), which is the same client, but with queries going to `http://localhost:8410` instead.
-Code for the client at `https://github.com/sidaw/shrdlurn`. See its [README.md](https://github.com/sidaw/shrdlurn/blob/master/README.md) if you want to work with and build the client yourself.
+It queries the server and renders the points to a browser.
+Code for the client at `https://github.com/The-Dawwctor/shrdlurn-robot`. See its [README.md](https://github.com/The-Dawwctor/shrdlurn-robot/blob/master/README.md) if you want to work with and build the client yourself.
 
 
-### voxelurn community server
+### NRC community server
 Located at `interactive/community-server`, the community server
-handles other functionalities such as logging client actions, leaderboard, submiting structures, authentication etc. and generally functions not related to parsing. This server is needed for running interactive experiments, but is not required just for trying out voxelurn.
+handles other functionalities such as logging client actions, leaderboard, submiting structures, authentication etc. and generally functions not related to parsing. This server is needed for running interactive experiments, but is not required just for trying out NRC.
 
 
-## Running the SEMPRE server for Voxelurn
+## Running the SEMPRE server for NRC
 
 0. Setup SEMPRE dependencies and compile
 
@@ -38,7 +37,7 @@ handles other functionalities such as logging client actions, leaderboard, submi
 
 1. Start the server
 
-        ./interactive/run @mode=voxelurn -server -interactive
+        ./interactive/run @mode=robot -server -interactive
 
   things in the core language such as `add red left`, `repeat 3 [select left]` should work.
 
@@ -46,14 +45,14 @@ handles other functionalities such as logging client actions, leaderboard, submi
 
         ./interactive/run @mode=simulator @server=local @sandbox=none @task=freebuilddef -maxQueries 2496
 
-  try `add dancer`  now.
+  try `add dancer` now.
 
 ### Interacting with the server
 
 After you run the above, there are 3 ways to interact and try your own commands.
 
-* The visual way is to use the client: [http://local.voxelurn.com](http://local.voxelurn.com).
-  Code for the client is at `https://github.com/sidaw/shrdlurn` (see its [README.md](https://github.com/sidaw/shrdlurn/blob/master/README.md)).
+* The visual way is to use the client: [https://the-dawwctor.github.io/shrdlurn-robot/](https://the-dawwctor.github.io/shrdlurn-robot/).
+  Code for the client is at `https://github.com/The-Dawwctor/shrdlurn-robot` (see its [README.md](https://github.com/The-Dawwctor/shrdlurn-robot/blob/master/README.md)).
   Try `[add dancer; front 5] 3 times`.
 
 * Hit `Ctrl-D` on the terminal running the server, and type `add red top`, or `add green monster`
