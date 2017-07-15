@@ -6,6 +6,7 @@ import java.util.List;
 import java.util.stream.Collectors;
 
 import org.testng.collections.Lists;
+import org.apache.commons.math3.complex.Quaternion;
 import Jama.*;
 
 import edu.stanford.nlp.sempre.Json;
@@ -14,7 +15,7 @@ import edu.stanford.nlp.sempre.interactive.Item;
 public class Point extends Item {
     public Color color;
     public int x, y, z;
-    public Matrix orientation;
+    public Quaternion orientation;
 
     public Point() {
 	this.names = new HashSet<>();
@@ -22,7 +23,7 @@ public class Point extends Item {
 	this.x = 0;
 	this.y = 0;
 	this.z = 0;
-	this.orientation = new Matrix(new double[]{0, 0, 0, 0}, 4);
+	this.orientation = new Quaternion(new double[]{0, 0, 0, 0});
 	this.color = Color.fromString("None");
     }
 
@@ -39,37 +40,41 @@ public class Point extends Item {
 	this.color = Color.fromString(color);
     }
 
+    public void setOrientation(double x, double y, double z, double w) {
+	orientation = new Quaternion(x, y, z, w);
+    }
+    
     // Rotates given point by axis and angle theta.
     // Determined by whether rotation with respect to local axis or world axis.
     public void rotate(String axis, boolean local, double theta) {
-	Matrix axisVec;
+	Quaternion axisVec;
 	if (axis.equalsIgnoreCase("x")) {
-	    axisVec = new Matrix(new double[]{1, 0, 0}, 3);
+	    axisVec = new Quaternion(new double[]{1, 0, 0});
 	} else if (axis.equalsIgnoreCase("y")) {
-	    axisVec = new Matrix(new double[]{0, 1, 0}, 3);
+	    axisVec = new Quaternion(new double[]{0, 1, 0});
 	} else if (axis.equalsIgnoreCase("z")) {
-	    axisVec = new Matrix(new double[]{0, 0, 1}, 3);
+	    axisVec = new Quaternion(new double[]{0, 0, 1});
 	} else {
 	    // Invalid axis, don't rotate
 	    System.out.print("Invalid axis. Specify x, y, or z axis");
 	    return;
 	}
-	Matrix correctAxis;
+	Quaternion correctAxis;
 	if (local) {
-	    // perform rotation on axisVec to change axis we're rotating around
-	    correctAxis = axisVec;
+	    // if local frame, rotate axis by current orientation to get correct axis for axis-angle calculation
+	    // v' = qvq^-1
+	    correctAxis = orientation.getInverse().multiply(axisVec.multiply(orientation));
 	} else {
 	    correctAxis = axisVec;
 	}
 	double ct = Math.cos(theta/2);
 	double st = Math.sin(theta/2);
-	Matrix rotateQ = new Matrix(new double[]{
-		ct,
-		st * correctAxis.get(0, 0),
-		st * correctAxis.get(1, 0),
-		st * correctAxis.get(2, 0)
-	    }, 1);
-	
+	Quaternion rotateQ = new Quaternion(ct,
+					    st * correctAxis.getQ1(),
+					    st * correctAxis.getQ2(),
+					    st * correctAxis.getQ3());
+	// q' = q2q1, q1 = orientation, q2 = applied rotation
+	orientation = orientation.multiply(rotateQ).normalize();
     }
     
     public Point move(Direction dir) {
