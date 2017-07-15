@@ -50,7 +50,6 @@ public abstract class World {
   public void remove(Set<Item> selected) {
     allItems = new HashSet<>(allItems);
     allItems.removeAll(selected);
-    // this.selected.removeAll(selected);
   }
 
   // it is bad to ever mutate select, which will break scoping

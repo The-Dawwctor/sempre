@@ -13,14 +13,14 @@ import edu.stanford.nlp.sempre.interactive.robot.Point;
 public class PEPoint extends Point {
     boolean attract;
 
-    public PEPoint(int row, int col, int height, String color, boolean attract) {
-	super(row, col, height, color);
+    public PEPoint(int x, int y, int z, String color, boolean attract) {
+	super(x, y, z, color);
 	this.attract = attract;
 	this.names.add("PEPoint");
     }
     
-    public PEPoint(int row, int col, int height, String color) {
-	this(row, col, height, color, false);
+    public PEPoint(int x, int y, int z, String color) {
+	this(x, y, z, color, false);
     }
     
     public PEPoint() {
@@ -30,8 +30,8 @@ public class PEPoint extends Point {
     }
 
     // used as a key
-    public PEPoint(int row, int col, int height) {
-	super(row, col, height);
+    public PEPoint(int x, int y, int z) {
+	super(x, y, z);
 	this.attract = false;
 	this.names.add("PEPoint");
     }
@@ -40,11 +40,11 @@ public class PEPoint extends Point {
     public Object get(String property) {
 	Object propval;
 	if (property.equals("height"))
-	    propval = new Integer(this.height);
+	    propval = new Integer(this.z);
 	else if (property.equals("row"))
-	    propval = new Integer(this.row);
+	    propval = new Integer(this.x);
 	else if (property.equals("col"))
-	    propval = new Integer(this.col);
+	    propval = new Integer(this.y);
 	else if (property.equals("attract"))
 	    propval = new Boolean(this.attract);
 	else if (property.equals("color"))
@@ -74,11 +74,11 @@ public class PEPoint extends Point {
 
 	if (value instanceof Integer) {
 	    if (property.equals("height"))
-		this.height = (Integer) value;
+		this.z = (Integer) value;
 	    else if (property.equals("row"))
-		this.row = (Integer) value;
+		this.x = (Integer) value;
 	    else if (property.equals("col"))
-		this.height = (Integer) value;
+		this.y = (Integer) value;
 	} else if (property.equals("color") && value instanceof String) {
 	    this.color = Color.fromString(value.toString());
 	} else if (property.equals("attract") && value instanceof Boolean) {
@@ -93,9 +93,9 @@ public class PEPoint extends Point {
     public static PEPoint fromJSONObject(List<Object> props) {
 	PEPoint retcube = new PEPoint();
 	retcube.names.addAll((List<String>) props.get(0));
-	retcube.row = ((Integer) props.get(1));
-	retcube.col = ((Integer) props.get(2));
-	retcube.height = ((Integer) props.get(3));
+	retcube.x = ((Integer) props.get(1));
+	retcube.y = ((Integer) props.get(2));
+	retcube.z = ((Integer) props.get(3));
 	retcube.color = Color.fromString(((String) props.get(4)));
 	retcube.attract = ((Boolean) props.get(5));
 	return retcube;
@@ -110,16 +110,6 @@ public class PEPoint extends Point {
 
     @Override
     public PEPoint clone() {
-	return new PEPoint(this.row, this.col, this.height, this.color.toString(), this.attract);
-    }
-
-    @Override
-    public int hashCode() {
-	final int prime = 19;
-	int result = 1;
-	result = prime * result + col;
-	result = prime * result + height;
-	result = prime * result + row;
-	return result;
+	return new PEPoint(this.x, this.y, this.z, this.color.toString(), this.attract);
     }
 }
