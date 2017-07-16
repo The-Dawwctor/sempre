@@ -6,6 +6,7 @@ import java.util.Set;
 import java.util.stream.Collectors;
 
 import org.testng.collections.Lists;
+import org.apache.commons.math3.complex.Quaternion;
 
 import edu.stanford.nlp.sempre.Json;
 import edu.stanford.nlp.sempre.interactive.robot.Point;
@@ -23,8 +24,8 @@ public class OpPoint extends Point {
 	this.names.add("OpPoint");
     }
 
-    public OpPoint(int x, int y, int z, String color) {
-	super(x, z, z, color);
+    public OpPoint(int x, int y, int z, Quaternion orientation, String color) {
+	super(x, z, z, orientation, color);
 	this.names.add("OpPoint");
     }
 

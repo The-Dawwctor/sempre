@@ -5,6 +5,7 @@ import java.util.List;
 import java.util.Set;
 
 import org.testng.collections.Lists;
+import org.apache.commons.math3.complex.Quaternion;
 
 import edu.stanford.nlp.sempre.Json;
 import edu.stanford.nlp.sempre.interactive.robot.Point;
@@ -12,16 +13,6 @@ import edu.stanford.nlp.sempre.interactive.robot.Point;
 //individual stacks
 public class PEPoint extends Point {
     boolean attract;
-
-    public PEPoint(int x, int y, int z, String color, boolean attract) {
-	super(x, y, z, color);
-	this.attract = attract;
-	this.names.add("PEPoint");
-    }
-    
-    public PEPoint(int x, int y, int z, String color) {
-	this(x, y, z, color, false);
-    }
     
     public PEPoint() {
 	super();
@@ -36,56 +27,30 @@ public class PEPoint extends Point {
 	this.names.add("PEPoint");
     }
 
+    public PEPoint(int x, int y, int z, Quaternion orientation, String color, boolean attract) {
+	super(x, y, z, orientation, color);
+	this.attract = attract;
+	this.names.add("PEPoint");
+    }
+    
     @Override
+    @SuppressWarnings("unchecked")
     public Object get(String property) {
 	Object propval;
-	if (property.equals("height"))
-	    propval = new Integer(this.z);
-	else if (property.equals("row"))
-	    propval = new Integer(this.x);
-	else if (property.equals("col"))
-	    propval = new Integer(this.y);
-	else if (property.equals("attract"))
+	if (property.equals("attract"))
 	    propval = new Boolean(this.attract);
-	else if (property.equals("color"))
-	    propval = this.color.toString().toLowerCase();
-	else if (property.equals("name"))
-	    propval = this.names;
 	else
-	    throw new RuntimeException("getting property " + property + " is not supported.");
+	    propval = super.get(property);
 	return propval;
     }
 
     @Override
+    @SuppressWarnings("unchecked")
     public void update(String property, Object value) {
-	if (value instanceof Set) {
-	    Set valueSet = (Set) value;
-	    if (valueSet.size() == 0) {
-		// updating with empty set does nothing, throw something?
-		return;
-	    } else if (valueSet.size() == 1) {
-		value = valueSet.iterator().next();
-	    } else {
-		throw new RuntimeException(String.format("Updating %s to %s not allowed," +
-							 " which has %d values, but a property can only have 1 value. ",
-							 property, value.toString(), valueSet.size()));
-	    }
-	}
-
-	if (value instanceof Integer) {
-	    if (property.equals("height"))
-		this.z = (Integer) value;
-	    else if (property.equals("row"))
-		this.x = (Integer) value;
-	    else if (property.equals("col"))
-		this.y = (Integer) value;
-	} else if (property.equals("color") && value instanceof String) {
-	    this.color = Color.fromString(value.toString());
-	} else if (property.equals("attract") && value instanceof Boolean) {
+	if (property.equals("attract") && value instanceof Boolean) {
 	    this.attract = (Boolean) attract;
 	} else {
-	    throw new RuntimeException(String.format("Updating property %s to %s not allowed! (type %s not expected for %s) ",
-						     property, value.toString(), value.getClass(), property));
+	    super.update(property, value);
 	}
     }
 
@@ -96,8 +61,10 @@ public class PEPoint extends Point {
 	retcube.x = ((Integer) props.get(1));
 	retcube.y = ((Integer) props.get(2));
 	retcube.z = ((Integer) props.get(3));
-	retcube.color = Color.fromString(((String) props.get(4)));
-	retcube.attract = ((Boolean) props.get(5));
+	List<Double> qElems = (List<Double>) props.get(4);
+	retcube.rot = new Quaternion(qElems.get(0), qElems.get(1), qElems.get(2), qElems.get(3));
+	retcube.color = Color.fromString(((String) props.get(5)));
+	retcube.attract = ((Boolean) props.get(6));
 	return retcube;
     }
 
@@ -110,6 +77,6 @@ public class PEPoint extends Point {
 
     @Override
     public PEPoint clone() {
-	return new PEPoint(this.x, this.y, this.z, this.color.toString(), this.attract);
+	return new PEPoint(this.x, this.y, this.z, this.rot, this.color.toString(), this.attract);
     }
 }

@@ -8,6 +8,7 @@ import java.util.function.Function;
 import java.util.stream.Collectors;
 
 import com.google.common.collect.Sets;
+import org.apache.commons.math3.complex.Quaternion;
 
 import edu.stanford.nlp.sempre.ContextValue;
 import edu.stanford.nlp.sempre.Json;
@@ -23,7 +24,7 @@ public class RobotWorld extends World {
 
     public static RobotWorld fromContext(ContextValue context) {
 	if (context == null || context.graph == null) {
-	    return fromJSON("[[[\"S\"], 0,0,0,\"gray\",false]]");
+	    return fromJSON("[[[\"S\"], 0,0,0,[0,0,0,0],\"gray\",false]]");
 	}
 	NaiveKnowledgeGraph graph = (NaiveKnowledgeGraph) context.graph;
 	String wallString = ((StringValue) graph.triples.get(0).e1).value;
@@ -31,7 +32,7 @@ public class RobotWorld extends World {
     }
 
     public void base(int x, int y) {
-	Point basecube = new Point(x, y, 0, Color.Fake.toString());
+	Point basecube = new Point(x, y, 0, Quaternion.ZERO, Color.Fake.toString());
 	this.allItems = new HashSet<>(this.allItems);
 	this.selected = new HashSet<>(this.selected);
 	allItems.add(basecube);
@@ -41,10 +42,10 @@ public class RobotWorld extends World {
     public Set<Item> origin() {
 	for (Item i : allItems) {
 	    Point b = (Point) i;
-	    if (b.col == 0 && b.row == 0 && b.height == 0)
+	    if (b.y == 0 && b.x == 0 && b.z == 0)
 		return Sets.newHashSet(b);
 	}
-	Point basecube = new Point(0, 0, 0, Color.Fake.toString());
+	Point basecube = new Point(0, 0, 0, Quaternion.ZERO, Color.Fake.toString());
 	return Sets.newHashSet(basecube);
     }
 
@@ -134,14 +135,14 @@ public class RobotWorld extends World {
     // set goal position in coordinate system
     // TODO: CHANGE INTEGER COORDINATES TO DOUBLES AS SOON AS SETTING MADE CONTINUOUS
     public void goal(int x, int y, int z) {
-	PEPoint newGoal = new PEPoint(x, y, z, "green", true);
+	PEPoint newGoal = new PEPoint(x, y, z, Quaternion.ZERO, "green", true);
 	this.allItems.add(newGoal);
     }
 
     // set obstacle position in coordinate system
     // TODO: CHANGE INTEGER COORDINATES TO DOUBLES AS SOON AS SETTING MADE CONTINUOUS
     public void block(int x, int y, int z) {
-	PEPoint newObstacle = new PEPoint(x, y, z, "red", false);
+	PEPoint newObstacle = new PEPoint(x, y, z, Quaternion.ZERO, "red", false);
 	this.allItems.add(newObstacle);
     }
     
@@ -150,17 +151,17 @@ public class RobotWorld extends World {
 	Direction dir = Direction.fromString(dirstr);
 	switch (dir) {
 	case Back:
-	    return argmax(c -> c.row, selected);
+	    return argmax(c -> c.x, selected);
 	case Front:
-	    return argmax(c -> -c.row, selected);
+	    return argmax(c -> -c.x, selected);
 	case Left:
-	    return argmax(c -> c.col, selected);
+	    return argmax(c -> c.y, selected);
 	case Right:
-	    return argmax(c -> -c.col, selected);
+	    return argmax(c -> -c.y, selected);
 	case Top:
-	    return argmax(c -> c.height, selected);
+	    return argmax(c -> c.z, selected);
 	case Bot:
-	    return argmax(c -> -c.height, selected);
+	    return argmax(c -> -c.z, selected);
 	default:
 	    throw new RuntimeException("invalid direction");
 	}

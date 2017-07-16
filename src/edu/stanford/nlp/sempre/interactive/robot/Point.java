@@ -7,7 +7,6 @@ import java.util.stream.Collectors;
 
 import org.testng.collections.Lists;
 import org.apache.commons.math3.complex.Quaternion;
-import Jama.*;
 
 import edu.stanford.nlp.sempre.Json;
 import edu.stanford.nlp.sempre.interactive.Item;
@@ -15,7 +14,7 @@ import edu.stanford.nlp.sempre.interactive.Item;
 public class Point extends Item {
     public Color color;
     public int x, y, z;
-    public Quaternion orientation;
+    public Quaternion rot;
 
     public Point() {
 	this.names = new HashSet<>();
@@ -23,7 +22,7 @@ public class Point extends Item {
 	this.x = 0;
 	this.y = 0;
 	this.z = 0;
-	this.orientation = new Quaternion(new double[]{0, 0, 0, 0});
+	this.rot = Quaternion.ZERO;
 	this.color = Color.fromString("None");
     }
 
@@ -35,13 +34,14 @@ public class Point extends Item {
 	this.z = z;
     }
 
-    public Point(int x, int y, int z, String color) {
+    public Point(int x, int y, int z, Quaternion orientation, String color) {
 	this(x, y, z);
 	this.color = Color.fromString(color);
+	this.rot = orientation;
     }
 
-    public void setOrientation(double x, double y, double z, double w) {
-	orientation = new Quaternion(x, y, z, w);
+    public void setOrientation(Quaternion newQ) {
+	rot = new Quaternion(newQ.getQ0(), newQ.getQ1(), newQ.getQ2(), newQ.getQ3());
     }
     
     // Rotates given point by axis and angle theta.
@@ -63,7 +63,7 @@ public class Point extends Item {
 	if (local) {
 	    // if local frame, rotate axis by current orientation to get correct axis for axis-angle calculation
 	    // v' = qvq^-1
-	    correctAxis = orientation.getInverse().multiply(axisVec.multiply(orientation));
+	    correctAxis = rot.getInverse().multiply(axisVec.multiply(rot));
 	} else {
 	    correctAxis = axisVec;
 	}
@@ -73,8 +73,9 @@ public class Point extends Item {
 					    st * correctAxis.getQ1(),
 					    st * correctAxis.getQ2(),
 					    st * correctAxis.getQ3());
-	// q' = q2q1, q1 = orientation, q2 = applied rotation
-	orientation = orientation.multiply(rotateQ).normalize();
+	// multiply quaternions to get rotation composition
+	// q' = q2q1, q1 = current orientation, q2 = applied rotation
+	rot = rot.multiply(rotateQ).normalize();
     }
     
     public Point move(Direction dir) {
@@ -143,6 +144,8 @@ public class Point extends Item {
 	    propval = this.color.toString().toLowerCase();
 	else if (property.equals("name"))
 	    propval = this.names;
+	else if (property.equals("orientation"))
+	    propval = new Quaternion(this.rot.getScalarPart(), this.rot.getVectorPart());
 	else
 	    throw new RuntimeException("getting property " + property + " is not supported.");
 	return propval;
@@ -173,6 +176,8 @@ public class Point extends Item {
 		this.y = (Integer) value;
 	} else if (property.equals("color") && value instanceof String) {
 	    this.color = Color.fromString(value.toString());
+	} else if (property.equals("orientation") && value instanceof Quaternion) {
+	    this.rot = (Quaternion) value;
 	} else {
 	    throw new RuntimeException(String.format("Updating property %s to %s not allowed! (type %s not expected for %s) ",
 						     property, value.toString(), value.getClass(), property));
@@ -181,7 +186,8 @@ public class Point extends Item {
 
     public Object toJSON() {
 	List<String> globalNames = names.stream().collect(Collectors.toList());
-	List<Object> point = Lists.newArrayList(globalNames, x, y, z, color.toString());
+	List<Double> qElems = Lists.newArrayList(rot.getQ0(), rot.getQ1(), rot.getQ2(), rot.getQ3());
+	List<Object> point = Lists.newArrayList(globalNames, x, y, z, qElems, color.toString());
 	return point;
     }
 
@@ -231,13 +237,15 @@ public class Point extends Item {
 	retcube.x = ((Integer) props.get(1));
 	retcube.y = ((Integer) props.get(2));
 	retcube.z = ((Integer) props.get(3));
-	retcube.color = Color.fromString(((String) props.get(4)));
+	List<Double> qElems = (List<Double>) props.get(4);
+	retcube.rot = new Quaternion(qElems.get(0), qElems.get(1), qElems.get(2), qElems.get(3));
+	retcube.color = Color.fromString(((String) props.get(5)));
 	return retcube;
     }
     
     @Override
     public Point clone() {
-	return new Point(this.x, this.y, this.z, this.color.toString());
+	return new Point(this.x, this.y, this.z, this.rot, this.color.toString());
     }
     
     @Override
