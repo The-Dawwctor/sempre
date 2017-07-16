@@ -62,7 +62,7 @@ public class PEPoint extends Point {
 	retcube.y = ((Integer) props.get(2));
 	retcube.z = ((Integer) props.get(3));
 	List<Double> qElems = (List<Double>) props.get(4);
-	retcube.rot = new Quaternion(qElems.get(0), qElems.get(1), qElems.get(2), qElems.get(3));
+	retcube.rotate = new Quaternion(qElems.get(0), qElems.get(1), qElems.get(2), qElems.get(3));
 	retcube.color = Color.fromString(((String) props.get(5)));
 	retcube.attract = ((Boolean) props.get(6));
 	return retcube;
@@ -77,6 +77,6 @@ public class PEPoint extends Point {
 
     @Override
     public PEPoint clone() {
-	return new PEPoint(this.x, this.y, this.z, this.rot, this.color.toString(), this.attract);
+	return new PEPoint(this.x, this.y, this.z, this.rotate, this.color.toString(), this.attract);
     }
 }

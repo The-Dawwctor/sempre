@@ -14,7 +14,7 @@ import edu.stanford.nlp.sempre.interactive.Item;
 public class Point extends Item {
     public Color color;
     public int x, y, z;
-    public Quaternion rot;
+    public Quaternion rotate;
 
     public Point() {
 	this.names = new HashSet<>();
@@ -22,7 +22,7 @@ public class Point extends Item {
 	this.x = 0;
 	this.y = 0;
 	this.z = 0;
-	this.rot = Quaternion.ZERO;
+	this.rotate = Quaternion.ZERO;
 	this.color = Color.fromString("None");
     }
 
@@ -37,16 +37,16 @@ public class Point extends Item {
     public Point(int x, int y, int z, Quaternion orientation, String color) {
 	this(x, y, z);
 	this.color = Color.fromString(color);
-	this.rot = orientation;
+	this.rotate = orientation;
     }
 
     public void setOrientation(Quaternion newQ) {
-	rot = new Quaternion(newQ.getQ0(), newQ.getQ1(), newQ.getQ2(), newQ.getQ3());
+	rotate = new Quaternion(newQ.getQ0(), newQ.getQ1(), newQ.getQ2(), newQ.getQ3());
     }
     
     // Rotates given point by axis and angle theta.
     // Determined by whether rotation with respect to local axis or world axis.
-    public void rotate(String axis, boolean local, double theta) {
+    public void rotatePoint(String axis, boolean local, double theta) {
 	Quaternion axisVec;
 	if (axis.equalsIgnoreCase("x")) {
 	    axisVec = new Quaternion(new double[]{1, 0, 0});
@@ -63,7 +63,7 @@ public class Point extends Item {
 	if (local) {
 	    // if local frame, rotate axis by current orientation to get correct axis for axis-angle calculation
 	    // v' = qvq^-1
-	    correctAxis = rot.getInverse().multiply(axisVec.multiply(rot));
+	    correctAxis = rotate.getInverse().multiply(axisVec.multiply(rotate));
 	} else {
 	    correctAxis = axisVec;
 	}
@@ -75,7 +75,7 @@ public class Point extends Item {
 					    st * correctAxis.getQ3());
 	// multiply quaternions to get rotation composition
 	// q' = q2q1, q1 = current orientation, q2 = applied rotation
-	rot = rot.multiply(rotateQ).normalize();
+	rotate = rotate.multiply(rotateQ).normalize();
     }
     
     public Point move(Direction dir) {
@@ -144,8 +144,8 @@ public class Point extends Item {
 	    propval = this.color.toString().toLowerCase();
 	else if (property.equals("name"))
 	    propval = this.names;
-	else if (property.equals("orientation"))
-	    propval = new Quaternion(this.rot.getScalarPart(), this.rot.getVectorPart());
+	else if (property.equals("rotate"))
+	    propval = new Quaternion(this.rotate.getScalarPart(), this.rotate.getVectorPart());
 	else
 	    throw new RuntimeException("getting property " + property + " is not supported.");
 	return propval;
@@ -176,8 +176,8 @@ public class Point extends Item {
 		this.y = (Integer) value;
 	} else if (property.equals("color") && value instanceof String) {
 	    this.color = Color.fromString(value.toString());
-	} else if (property.equals("orientation") && value instanceof Quaternion) {
-	    this.rot = (Quaternion) value;
+	} else if (property.equals("rotate") && value instanceof Quaternion) {
+	    this.rotate = (Quaternion) value;
 	} else {
 	    throw new RuntimeException(String.format("Updating property %s to %s not allowed! (type %s not expected for %s) ",
 						     property, value.toString(), value.getClass(), property));
@@ -186,7 +186,7 @@ public class Point extends Item {
 
     public Object toJSON() {
 	List<String> globalNames = names.stream().collect(Collectors.toList());
-	List<Double> qElems = Lists.newArrayList(rot.getQ0(), rot.getQ1(), rot.getQ2(), rot.getQ3());
+	List<Double> qElems = Lists.newArrayList(rotate.getQ0(), rotate.getQ1(), rotate.getQ2(), rotate.getQ3());
 	List<Object> point = Lists.newArrayList(globalNames, x, y, z, qElems, color.toString());
 	return point;
     }
@@ -237,15 +237,15 @@ public class Point extends Item {
 	retcube.x = ((Integer) props.get(1));
 	retcube.y = ((Integer) props.get(2));
 	retcube.z = ((Integer) props.get(3));
-	List<Double> qElems = (List<Double>) props.get(4);
-	retcube.rot = new Quaternion(qElems.get(0), qElems.get(1), qElems.get(2), qElems.get(3));
+	List<Double> ws = (List<Double>) props.get(4);
+	retcube.rotate = new Quaternion(ws.get(0), ws.get(1), ws.get(2), ws.get(3));
 	retcube.color = Color.fromString(((String) props.get(5)));
 	return retcube;
     }
     
     @Override
     public Point clone() {
-	return new Point(this.x, this.y, this.z, this.rot, this.color.toString());
+	return new Point(this.x, this.y, this.z, this.rotate, this.color.toString());
     }
     
     @Override
