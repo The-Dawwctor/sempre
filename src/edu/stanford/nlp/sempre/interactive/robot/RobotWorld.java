@@ -24,7 +24,7 @@ public class RobotWorld extends World {
 
     public static RobotWorld fromContext(ContextValue context) {
 	if (context == null || context.graph == null) {
-	    return fromJSON("[[[\"S\"], 0,0,0,[0.0,0.0,0.0,0.0],\"gray\",false]]");
+	    return fromJSON("[[[\"S\"], 0,0,0,[0,0,0,0],\"gray\",false]]");
 	}
 	NaiveKnowledgeGraph graph = (NaiveKnowledgeGraph) context.graph;
 	String wallString = ((StringValue) graph.triples.get(0).e1).value;

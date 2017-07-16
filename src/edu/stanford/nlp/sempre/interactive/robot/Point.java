@@ -3,6 +3,7 @@ package edu.stanford.nlp.sempre.interactive.robot;
 import java.util.Set;
 import java.util.HashSet;
 import java.util.List;
+import java.util.ArrayList;
 import java.util.stream.Collectors;
 
 import org.testng.collections.Lists;
@@ -237,7 +238,18 @@ public class Point extends Item {
 	retcube.x = ((Integer) props.get(1));
 	retcube.y = ((Integer) props.get(2));
 	retcube.z = ((Integer) props.get(3));
-	List<Double> ws = (List<Double>) props.get(4);
+	List<Object> ps = (List<Object>) props.get(4);
+	List<Double> ws = new ArrayList<Double>();
+	// Fill out orientation Quaternion and convert to double values
+	for (Object p : ps) {
+	    if (p instanceof Integer) {
+		ws.add(((Integer) p).doubleValue());
+	    } else if (p instanceof Double) {
+		ws.add((Double) p);
+	    } else {
+		throw new RuntimeException("Invalid data type in orientation found");
+	    }
+	}
 	retcube.rotate = new Quaternion(ws.get(0), ws.get(1), ws.get(2), ws.get(3));
 	retcube.color = Color.fromString(((String) props.get(5)));
 	return retcube;
