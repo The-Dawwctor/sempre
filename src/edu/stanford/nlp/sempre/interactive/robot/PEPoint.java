@@ -56,7 +56,15 @@ public class PEPoint extends Point {
 
     @SuppressWarnings("unchecked")
     public static PEPoint fromJSONObject(List<Object> props) {
-	PEPoint retpoint = (PEPoint) Point.fromJSONObject(props);
+	Point p = Point.fromJSONObject(props);
+	PEPoint retpoint = new PEPoint();
+	retpoint.names = p.names;
+	retpoint.id = p.id;
+	retpoint.x = p.x;
+	retpoint.y = p.y;
+	retpoint.z = p.z;
+	retpoint.rotate = p.rotate;
+	retpoint.color = p.color;
 	retpoint.attract = ((Boolean) props.get(7));
 	return retpoint;
     }

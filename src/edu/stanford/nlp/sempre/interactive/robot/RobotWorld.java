@@ -24,15 +24,24 @@ public class RobotWorld extends World {
     private int currentID;
 
     // Returns current unused ID
-    private int getCurrentID() {
-	int oldID = currentID;
+    private int incrementAndGetID() {
 	currentID++;
-	return oldID;
+	return currentID;
+    }
+
+    // Finds highest ID in world; next highest is unused
+    private void setStartID() {
+	for (Item p : allItems) {
+	    int id = ((Point) p).id;
+	    if (id > currentID) {
+		currentID = id;
+	    }
+	}
     }
     
     public static RobotWorld fromContext(ContextValue context) {
 	if (context == null || context.graph == null) {
-	    return fromJSON("[[[\"S\"],-1,0,0,0,[0,0,0,0],\"gray\",false]]");
+	    return fromJSON("[[[\"S\"],0,0,0,0,[0,0,0,0],\"gray\",false]]");
 	}
 	NaiveKnowledgeGraph graph = (NaiveKnowledgeGraph) context.graph;
 	String wallString = ((StringValue) graph.triples.get(0).e1).value;
@@ -40,8 +49,7 @@ public class RobotWorld extends World {
     }
 
     public void base(int x, int y) {
-	Point basecube = new Point(getCurrentID(), x, y, 0, Quaternion.ZERO, Color.Fake.toString());
-	currentID++;
+	Point basecube = new Point(incrementAndGetID(), x, y, 0, Quaternion.ZERO, Color.Fake.toString());
 	this.allItems = new HashSet<>(this.allItems);
 	this.selected = new HashSet<>(this.selected);
 	allItems.add(basecube);
@@ -54,7 +62,7 @@ public class RobotWorld extends World {
 	    if (b.y == 0 && b.x == 0 && b.z == 0)
 		return Sets.newHashSet(b);
 	}
-	Point basecube = new Point(getCurrentID(), 0, 0, 0, Quaternion.ZERO, Color.Fake.toString());
+	Point basecube = new Point(incrementAndGetID(), 0, 0, 0, Quaternion.ZERO, Color.Fake.toString());
 	return Sets.newHashSet(basecube);
     }
 
@@ -64,7 +72,7 @@ public class RobotWorld extends World {
 	this.allItems = blockset;
 	this.selected = blockset.stream().filter(b -> ((Point) b).names.contains(SELECT)).collect(Collectors.toSet());
 	this.selected.forEach(i -> i.names.remove(SELECT));
-	this.currentID = 0;
+	setStartID();
     }
 
     // only use names S to communicate with client, internally it's just select variable
@@ -91,8 +99,7 @@ public class RobotWorld extends World {
 		    return Point.fromJSONObject(c);
 		}
 	    }).collect(Collectors.toSet());
-	RobotWorld world = new RobotWorld(items);
-	return world;
+	return new RobotWorld(items);
     }
 
     @Override
@@ -146,14 +153,14 @@ public class RobotWorld extends World {
     // Set goal position in coordinate system
     // TODO: CHANGE INTEGER COORDINATES TO DOUBLES AS SOON AS SETTING MADE CONTINUOUS
     public void goal(int x, int y, int z) {
-	PEPoint newGoal = new PEPoint(getCurrentID(), x, y, z, Quaternion.ZERO, "green", true);
+	PEPoint newGoal = new PEPoint(incrementAndGetID(), x, y, z, Quaternion.ZERO, "green", true);
 	this.allItems.add(newGoal);
     }
 
     // Set obstacle position in coordinate system
     // TODO: CHANGE INTEGER COORDINATES TO DOUBLES AS SOON AS SETTING MADE CONTINUOUS
     public void block(int x, int y, int z) {
-	PEPoint newObstacle = new PEPoint(getCurrentID(), x, y, z, Quaternion.ZERO, "red", false);
+	PEPoint newObstacle = new PEPoint(incrementAndGetID(), x, y, z, Quaternion.ZERO, "red", false);
 	this.allItems.add(newObstacle);
     }
     
