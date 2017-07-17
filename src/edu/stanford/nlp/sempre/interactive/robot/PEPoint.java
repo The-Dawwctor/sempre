@@ -27,8 +27,8 @@ public class PEPoint extends Point {
 	this.names.add("PEPoint");
     }
 
-    public PEPoint(int x, int y, int z, Quaternion orientation, String color, boolean attract) {
-	super(x, y, z, orientation, color);
+    public PEPoint(int id, int x, int y, int z, Quaternion orientation, String color, boolean attract) {
+	super(id, x, y, z, orientation, color);
 	this.attract = attract;
 	this.names.add("PEPoint");
     }
@@ -56,16 +56,9 @@ public class PEPoint extends Point {
 
     @SuppressWarnings("unchecked")
     public static PEPoint fromJSONObject(List<Object> props) {
-	PEPoint retcube = new PEPoint();
-	retcube.names.addAll((List<String>) props.get(0));
-	retcube.x = ((Integer) props.get(1));
-	retcube.y = ((Integer) props.get(2));
-	retcube.z = ((Integer) props.get(3));
-	List<Double> qElems = (List<Double>) props.get(4);
-	retcube.rotate = new Quaternion(qElems.get(0), qElems.get(1), qElems.get(2), qElems.get(3));
-	retcube.color = Color.fromString(((String) props.get(5)));
-	retcube.attract = ((Boolean) props.get(6));
-	return retcube;
+	PEPoint retpoint = (PEPoint) Point.fromJSONObject(props);
+	retpoint.attract = ((Boolean) props.get(7));
+	return retpoint;
     }
 
     public Object toJSON() {
@@ -77,6 +70,6 @@ public class PEPoint extends Point {
 
     @Override
     public PEPoint clone() {
-	return new PEPoint(this.x, this.y, this.z, this.rotate, this.color.toString(), this.attract);
+	return new PEPoint(this.id, this.x, this.y, this.z, this.rotate, this.color.toString(), this.attract);
     }
 }

@@ -21,10 +21,18 @@ import fig.basic.Option;
 // the world of stacks
 public class RobotWorld extends World {
     public final static String SELECT = "S";
+    private int currentID;
 
+    // Returns current unused ID
+    private int getCurrentID() {
+	int oldID = currentID;
+	currentID++;
+	return oldID;
+    }
+    
     public static RobotWorld fromContext(ContextValue context) {
 	if (context == null || context.graph == null) {
-	    return fromJSON("[[[\"S\"], 0,0,0,[0,0,0,0],\"gray\",false]]");
+	    return fromJSON("[[[\"S\"],-1,0,0,0,[0,0,0,0],\"gray\",false]]");
 	}
 	NaiveKnowledgeGraph graph = (NaiveKnowledgeGraph) context.graph;
 	String wallString = ((StringValue) graph.triples.get(0).e1).value;
@@ -32,7 +40,8 @@ public class RobotWorld extends World {
     }
 
     public void base(int x, int y) {
-	Point basecube = new Point(x, y, 0, Quaternion.ZERO, Color.Fake.toString());
+	Point basecube = new Point(getCurrentID(), x, y, 0, Quaternion.ZERO, Color.Fake.toString());
+	currentID++;
 	this.allItems = new HashSet<>(this.allItems);
 	this.selected = new HashSet<>(this.selected);
 	allItems.add(basecube);
@@ -45,7 +54,7 @@ public class RobotWorld extends World {
 	    if (b.y == 0 && b.x == 0 && b.z == 0)
 		return Sets.newHashSet(b);
 	}
-	Point basecube = new Point(0, 0, 0, Quaternion.ZERO, Color.Fake.toString());
+	Point basecube = new Point(getCurrentID(), 0, 0, 0, Quaternion.ZERO, Color.Fake.toString());
 	return Sets.newHashSet(basecube);
     }
 
@@ -55,6 +64,7 @@ public class RobotWorld extends World {
 	this.allItems = blockset;
 	this.selected = blockset.stream().filter(b -> ((Point) b).names.contains(SELECT)).collect(Collectors.toSet());
 	this.selected.forEach(i -> i.names.remove(SELECT));
+	this.currentID = 0;
     }
 
     // only use names S to communicate with client, internally it's just select variable
@@ -116,6 +126,7 @@ public class RobotWorld extends World {
 	keyConsistency();
     }
 
+    // TODO: Change add method to create new unique cube instead of cloning old one
     public void add(String colorstr, String dirstr, Set<Item> selected) {
 	Direction dir = Direction.fromString(dirstr);
 	Color color = Color.fromString(colorstr);
@@ -132,21 +143,21 @@ public class RobotWorld extends World {
 	}
     }
 
-    // set goal position in coordinate system
+    // Set goal position in coordinate system
     // TODO: CHANGE INTEGER COORDINATES TO DOUBLES AS SOON AS SETTING MADE CONTINUOUS
     public void goal(int x, int y, int z) {
-	PEPoint newGoal = new PEPoint(x, y, z, Quaternion.ZERO, "green", true);
+	PEPoint newGoal = new PEPoint(getCurrentID(), x, y, z, Quaternion.ZERO, "green", true);
 	this.allItems.add(newGoal);
     }
 
-    // set obstacle position in coordinate system
+    // Set obstacle position in coordinate system
     // TODO: CHANGE INTEGER COORDINATES TO DOUBLES AS SOON AS SETTING MADE CONTINUOUS
     public void block(int x, int y, int z) {
-	PEPoint newObstacle = new PEPoint(x, y, z, Quaternion.ZERO, "red", false);
+	PEPoint newObstacle = new PEPoint(getCurrentID(), x, y, z, Quaternion.ZERO, "red", false);
 	this.allItems.add(newObstacle);
     }
     
-    // get cubes at extreme positions
+    // Get cubes at extreme positions
     public Set<Item> veryx(String dirstr, Set<Item> selected) {
 	Direction dir = Direction.fromString(dirstr);
 	switch (dir) {

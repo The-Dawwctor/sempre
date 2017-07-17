@@ -13,6 +13,7 @@ import edu.stanford.nlp.sempre.Json;
 import edu.stanford.nlp.sempre.interactive.Item;
 
 public class Point extends Item {
+    public int id;
     public Color color;
     public int x, y, z;
     public Quaternion rotate;
@@ -23,6 +24,7 @@ public class Point extends Item {
 	this.x = 0;
 	this.y = 0;
 	this.z = 0;
+	this.id = -1;
 	this.rotate = Quaternion.ZERO;
 	this.color = Color.fromString("None");
     }
@@ -35,8 +37,9 @@ public class Point extends Item {
 	this.z = z;
     }
 
-    public Point(int x, int y, int z, Quaternion orientation, String color) {
+    public Point(int id, int x, int y, int z, Quaternion orientation, String color) {
 	this(x, y, z);
+	this.id = id;
 	this.color = Color.fromString(color);
 	this.rotate = orientation;
     }
@@ -105,6 +108,8 @@ public class Point extends Item {
 	return this;
     }
 
+    // TODO: Remove method since need unique IDs for each block.
+    // Need to change implementaiton of add in RobotWorld
     public Point copy(Direction dir) {
 	Point c = this.clone();
 	switch (dir) {
@@ -135,11 +140,11 @@ public class Point extends Item {
     @Override
     public Object get(String property) {
 	Object propval;
-	if (property.equals("height"))
+	if (property.equals("z"))
 	    propval = new Integer(this.z);
-	else if (property.equals("row"))
+	else if (property.equals("x"))
 	    propval = new Integer(this.x);
-	else if (property.equals("col"))
+	else if (property.equals("y"))
 	    propval = new Integer(this.y);
 	else if (property.equals("color"))
 	    propval = this.color.toString().toLowerCase();
@@ -169,11 +174,11 @@ public class Point extends Item {
 	}
 
 	if (value instanceof Integer) {
-	    if (property.equals("height"))
+	    if (property.equals("z"))
 		this.z = (Integer) value;
-	    else if (property.equals("row"))
+	    else if (property.equals("x"))
 		this.x = (Integer) value;
-	    else if (property.equals("col"))
+	    else if (property.equals("y"))
 		this.y = (Integer) value;
 	} else if (property.equals("color") && value instanceof String) {
 	    this.color = Color.fromString(value.toString());
@@ -185,10 +190,11 @@ public class Point extends Item {
 	}
     }
 
+    // Current format: Names, ID, x, y, z (Position), Array of Rotation Quaternion, Color
     public Object toJSON() {
 	List<String> globalNames = names.stream().collect(Collectors.toList());
 	List<Double> qElems = Lists.newArrayList(rotate.getQ0(), rotate.getQ1(), rotate.getQ2(), rotate.getQ3());
-	List<Object> point = Lists.newArrayList(globalNames, x, y, z, qElems, color.toString());
+	List<Object> point = Lists.newArrayList(globalNames, id, x, y, z, qElems, color.toString());
 	return point;
     }
 
@@ -233,12 +239,14 @@ public class Point extends Item {
 
     @SuppressWarnings("unchecked")
     public static Point fromJSONObject(List<Object> props) {
-	Point retcube = new Point();
-	retcube.names.addAll((List<String>) props.get(0));
-	retcube.x = ((Integer) props.get(1));
-	retcube.y = ((Integer) props.get(2));
-	retcube.z = ((Integer) props.get(3));
-	List<Object> ps = (List<Object>) props.get(4);
+	Point retpoint = new Point();
+	retpoint.names.addAll((List<String>) props.get(0));
+	retpoint.id = ((Integer) props.get(1));
+	retpoint.x = ((Integer) props.get(2));
+	retpoint.y = ((Integer) props.get(3));
+	retpoint.z = ((Integer) props.get(4));
+	
+	List<Object> ps = (List<Object>) props.get(5);
 	List<Double> ws = new ArrayList<Double>();
 	// Fill out orientation Quaternion and convert to double values
 	for (Object p : ps) {
@@ -250,14 +258,16 @@ public class Point extends Item {
 		throw new RuntimeException("Invalid data type in orientation found");
 	    }
 	}
-	retcube.rotate = new Quaternion(ws.get(0), ws.get(1), ws.get(2), ws.get(3));
-	retcube.color = Color.fromString(((String) props.get(5)));
-	return retcube;
+	retpoint.rotate = new Quaternion(ws.get(0), ws.get(1), ws.get(2), ws.get(3));
+	
+	retpoint.color = Color.fromString(((String) props.get(6)));
+	return retpoint;
     }
     
     @Override
+    // TODO: remove since no longer valid with id system. Unique points only.
     public Point clone() {
-	return new Point(this.x, this.y, this.z, this.rotate, this.color.toString());
+	return new Point(this.id, this.x, this.y, this.z, this.rotate, this.color.toString());
     }
     
     @Override
