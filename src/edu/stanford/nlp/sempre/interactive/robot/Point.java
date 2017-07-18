@@ -55,11 +55,11 @@ public class Point extends Item {
     // Determined by whether rotation with respect to local axis or world axis.
     public void rotatePoint(String axis, boolean local, double theta) {
 	Quaternion axisVec;
-	if (axis.equalsIgnoreCase("x")) {
+	if (axis.equals("x")) {
 	    axisVec = new Quaternion(new double[]{1, 0, 0});
-	} else if (axis.equalsIgnoreCase("y")) {
+	} else if (axis.equals("y")) {
 	    axisVec = new Quaternion(new double[]{0, 1, 0});
-	} else if (axis.equalsIgnoreCase("z")) {
+	} else if (axis.equals("z")) {
 	    axisVec = new Quaternion(new double[]{0, 0, 1});
 	} else {
 	    // Invalid axis, don't rotate

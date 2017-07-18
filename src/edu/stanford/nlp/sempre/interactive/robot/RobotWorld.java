@@ -18,10 +18,14 @@ import edu.stanford.nlp.sempre.interactive.Item;
 import edu.stanford.nlp.sempre.interactive.World;
 import fig.basic.Option;
 
-// the world of stacks
+/* Contains a world made up of a set of points with properties that
+ * can be specified and fed into an operational space controller
+ * for a robot.
+ */
 public class RobotWorld extends World {
     public final static String SELECT = "S";
     private int currentID;
+    
 
     // Returns current unused ID
     private int incrementAndGetID() {
@@ -49,21 +53,21 @@ public class RobotWorld extends World {
     }
 
     public void base(int x, int y) {
-	Point basecube = new Point(incrementAndGetID(), x, y, 0, Quaternion.ZERO, Color.Fake.toString());
+	Point basepoint = new Point(incrementAndGetID(), x, y, 0, Quaternion.ZERO, Color.Fake.toString());
 	this.allItems = new HashSet<>(this.allItems);
 	this.selected = new HashSet<>(this.selected);
-	allItems.add(basecube);
-	selected.add(basecube);
+	allItems.add(basepoint);
+	selected.add(basepoint);
     }
 
     public Set<Item> origin() {
 	for (Item i : allItems) {
 	    Point b = (Point) i;
-	    if (b.y == 0 && b.x == 0 && b.z == 0)
+	    if (b.x == 0 && b.y == 0 && b.z == 0)
 		return Sets.newHashSet(b);
 	}
-	Point basecube = new Point(incrementAndGetID(), 0, 0, 0, Quaternion.ZERO, Color.Fake.toString());
-	return Sets.newHashSet(basecube);
+	Point basepoint = new Point(incrementAndGetID(), 0, 0, 0, Quaternion.ZERO, Color.Fake.toString());
+	return Sets.newHashSet(basepoint);
     }
 
     @SuppressWarnings("unchecked")
@@ -213,7 +217,7 @@ public class RobotWorld extends World {
 	keyConsistency();
     }
 
-    // get cubes at the outer locations
+    // get points at outer locations
     private Set<Item> extremePoints(Direction dir, Set<Item> selected) {
 	Set<Item> realPoints = realPoints(allItems);
 	return selected.stream().map(c -> {
