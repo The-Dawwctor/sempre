@@ -37,11 +37,11 @@ public class Point extends Item {
 	this.z = z;
     }
 
-    public Point(int id, int x, int y, int z, Quaternion orientation, String color) {
+    public Point(int id, int x, int y, int z, Quaternion rotate, String color) {
 	this(x, y, z);
 	this.id = id;
 	this.color = Color.fromString(color);
-	this.rotate = orientation;
+	this.rotate = rotate;
     }
 
     public void setOrientation(Quaternion newQ) {
@@ -108,8 +108,6 @@ public class Point extends Item {
 	return this;
     }
 
-    // TODO: Remove method since need unique IDs for each block.
-    // Need to change implementaiton of add in RobotWorld
     public Point copy(Direction dir) {
 	Point c = this.clone();
 	switch (dir) {

@@ -24,8 +24,8 @@ public class OpPoint extends Point {
 	this.names.add("OpPoint");
     }
 
-    public OpPoint(int id, int x, int y, int z, Quaternion orientation, String color) {
-	super(id, x, z, z, orientation, color);
+    public OpPoint(int id, int x, int y, int z, Quaternion rotate, String color) {
+	super(id, x, z, z, rotate, color);
 	this.names.add("OpPoint");
     }
 

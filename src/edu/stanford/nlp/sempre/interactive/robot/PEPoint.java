@@ -27,8 +27,8 @@ public class PEPoint extends Point {
 	this.names.add("PEPoint");
     }
 
-    public PEPoint(int id, int x, int y, int z, Quaternion orientation, String color, boolean attract) {
-	super(id, x, y, z, orientation, color);
+    public PEPoint(int id, int x, int y, int z, Quaternion rotate, String color, boolean attract) {
+	super(id, x, y, z, rotate, color);
 	this.attract = attract;
 	this.names.add("PEPoint");
     }

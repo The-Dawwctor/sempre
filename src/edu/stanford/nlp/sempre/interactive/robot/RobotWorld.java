@@ -41,7 +41,7 @@ public class RobotWorld extends World {
     
     public static RobotWorld fromContext(ContextValue context) {
 	if (context == null || context.graph == null) {
-	    return fromJSON("[[[\"S\"],0,0,0,0,[0,0,0,0],\"gray\",false]]");
+	    return fromJSON("[[[\"S\"],0,0,0,0,[0,0,0,0],\"gray\"]]");
 	}
 	NaiveKnowledgeGraph graph = (NaiveKnowledgeGraph) context.graph;
 	String wallString = ((StringValue) graph.triples.get(0).e1).value;
@@ -67,10 +67,10 @@ public class RobotWorld extends World {
     }
 
     @SuppressWarnings("unchecked")
-    public RobotWorld(Set<Item> blockset) {
+    public RobotWorld(Set<Item> pointset) {
 	super();
-	this.allItems = blockset;
-	this.selected = blockset.stream().filter(b -> ((Point) b).names.contains(SELECT)).collect(Collectors.toSet());
+	this.allItems = pointset;
+	this.selected = pointset.stream().filter(b -> ((Point) b).names.contains(SELECT)).collect(Collectors.toSet());
 	this.selected.forEach(i -> i.names.remove(SELECT));
 	setStartID();
     }
@@ -119,7 +119,7 @@ public class RobotWorld extends World {
     }
 
     // if selected no longer in all, make it fake colored and add to all;
-    // likewise, if some fake colored block is no longer selected, remove it
+    // likewise, if some fake colored point is no longer selected, remove it
     @Override
     public void merge() {
 	Sets.difference(selected, allItems).forEach(i -> ((Point) i).color = Color.Fake);
@@ -127,25 +127,21 @@ public class RobotWorld extends World {
 	allItems.addAll(selected);
     }
 
-    // block world specific actions, overriding move
     public void move(String dir, Set<Item> selected) {
 	selected.forEach(b -> ((Point) b).move(Direction.fromString(dir)));
 	keyConsistency();
     }
 
-    // TODO: Change add method to create new unique cube instead of cloning old one
     public void add(String colorstr, String dirstr, Set<Item> selected) {
 	Direction dir = Direction.fromString(dirstr);
-	Color color = Color.fromString(colorstr);
 
 	if (dir == Direction.None) { // add here
-	    selected.forEach(b -> ((Point) b).color = color);
+	    selected.forEach(b -> ((Point) b).color = Color.fromString(colorstr));
 	} else {
-	    Set<Item> extremeCubes = extremeCubes(dir, selected);
-	    this.allItems.addAll(extremeCubes.stream().map(c -> {
+	    Set<Item> extremePoints = extremePoints(dir, selected);
+	    this.allItems.addAll(extremePoints.stream().map(c -> {
 			Point d = ((Point) c).copy(dir);
-			d.color = color;
-			return d;
+			return new Point(incrementAndGetID(), d.x, d.y, d.z, d.rotate, colorstr);
 		    }).collect(Collectors.toList()));
 	}
     }
@@ -164,7 +160,7 @@ public class RobotWorld extends World {
 	this.allItems.add(newObstacle);
     }
     
-    // Get cubes at extreme positions
+    // Get points at extreme positions
     public Set<Item> veryx(String dirstr, Set<Item> selected) {
 	Direction dir = Direction.fromString(dirstr);
 	switch (dir) {
@@ -185,8 +181,7 @@ public class RobotWorld extends World {
 	}
     }
 
-    // return retrieved from allitems, along with any potential selectors which
-    // are empty.
+    // return retrieved from allitems, along with any potential empty selectors
     public Set<Item> adj(String dirstr, Set<Item> selected) {
 	Direction dir = Direction.fromString(dirstr);
 	Set<Item> selectors = selected.stream().map(c -> {
@@ -219,11 +214,11 @@ public class RobotWorld extends World {
     }
 
     // get cubes at the outer locations
-    private Set<Item> extremeCubes(Direction dir, Set<Item> selected) {
-	Set<Item> realCubes = realBlocks(allItems);
+    private Set<Item> extremePoints(Direction dir, Set<Item> selected) {
+	Set<Item> realPoints = realPoints(allItems);
 	return selected.stream().map(c -> {
 		Point d = (Point) c;
-		while (realCubes.contains(d.copy(dir)))
+		while (realPoints.contains(d.copy(dir)))
 		    d = d.copy(dir);
 		return d;
 	    }).collect(Collectors.toSet());
@@ -242,7 +237,7 @@ public class RobotWorld extends World {
 	refreshSet(previous);
     }
 
-    private Set<Item> realBlocks(Set<Item> all) {
+    private Set<Item> realPoints(Set<Item> all) {
 	return all.stream().filter(b -> !((Point) b).color.equals(Color.Fake)).collect(Collectors.toSet());
     }
 }

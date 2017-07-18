@@ -38,8 +38,7 @@ public abstract class World {
   public abstract void update(String rel, Object value, Set<Item> selected);
 
   public abstract void merge();
-  // public abstract void select(Set<Item> set);
-
+  
   public World() {
     this.allItems = new HashSet<>();
     this.selected = new HashSet<>();
