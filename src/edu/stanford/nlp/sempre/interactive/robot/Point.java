@@ -12,6 +12,9 @@ import org.apache.commons.math3.complex.Quaternion;
 import edu.stanford.nlp.sempre.Json;
 import edu.stanford.nlp.sempre.interactive.Item;
 
+/* Represents an arbitrary general point in the world.
+ * Contains unique id, color, position, and orientation quaternion.
+ */
 public class Point extends Item {
     public int id;
     public Color color;

@@ -10,7 +10,10 @@ import org.apache.commons.math3.complex.Quaternion;
 import edu.stanford.nlp.sempre.Json;
 import edu.stanford.nlp.sempre.interactive.robot.Point;
 
-//individual stacks
+/* Represents a Potential Energy Point, or a point that
+ * can be used to represent a goal or an obstacle to be fed into
+ * an operational space controller.
+ */
 public class PEPoint extends Point {
     boolean attract;
     
@@ -48,7 +51,7 @@ public class PEPoint extends Point {
     @SuppressWarnings("unchecked")
     public void update(String property, Object value) {
 	if (property.equals("attract") && value instanceof Boolean) {
-	    this.attract = (Boolean) attract;
+	    this.attract = (Boolean) value;
 	} else {
 	    super.update(property, value);
 	}
@@ -69,9 +72,9 @@ public class PEPoint extends Point {
 	return retpoint;
     }
 
+    @SuppressWarnings("unchecked")
     public Object toJSON() {
-	List<Object> pepoint = (List<Object>)super.toJSON();
-	List<Object> additional = Lists.newArrayList(attract);
+	List<Object> pepoint = (List)super.toJSON();
 	pepoint.add(attract);
 	return pepoint;
     }
