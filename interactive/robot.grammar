@@ -9,6 +9,7 @@
 (def @move move)
 (def @goal goal)
 (def @block block)
+(def @lgoto lgoto)
 
 # syntactic sugar
 (def @veryx veryx)
@@ -31,6 +32,9 @@
 # primitive actions with arguments
 (rule $Action (goal $Number $Number $Number) (lambda x (lambda y (lambda z (: @goal (var x) (var y) (var z))))) (anchored 1))
 (rule $Action (block $Number $Number $Number) (lambda x (lambda y (lambda z (: @block (var x) (var y) (var z))))) (anchored 1))
+
+# trajectory generation actions
+(rule $Action (lgoto $Color) (lambda c (: @lgoto (var c))) (anchored 1))
 
 # cube to cube relations
 (rule $Set ($Direction of $Set) (lambda d (lambda s
