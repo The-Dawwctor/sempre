@@ -163,8 +163,8 @@ public class RobotWorld extends World {
     }
 
     // Goto goal block with linear trajectory
+    // Takes in color string of destination block
     public void lgoto(String colorstr, Set<Item> selected) {
-    	Color col = Color.fromString(colorstr);
     	Point oldDest = null;
     	for (Item c : allItems) {
     		Point choice = (Point) c;
@@ -176,7 +176,7 @@ public class RobotWorld extends World {
     	if (oldDest == null) {
     		return;
     	}
-    	Point dest = oldDest;
+    	final Point dest = oldDest;
 		selected.forEach(b -> {
 			Point start = (Point) b;
 			double increment = 16;
@@ -189,7 +189,7 @@ public class RobotWorld extends World {
 			}
 			});
     }
-    
+
     // Get points at extreme positions
     public Set<Item> veryx(String dirstr, Set<Item> selected) {
 	Direction dir = Direction.fromString(dirstr);
