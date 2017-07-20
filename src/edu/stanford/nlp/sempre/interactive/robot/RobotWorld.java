@@ -9,6 +9,7 @@ import java.util.stream.Collectors;
 
 import com.google.common.collect.Sets;
 import org.apache.commons.math3.complex.Quaternion;
+import redis.clients.jedis.Jedis;
 
 import edu.stanford.nlp.sempre.ContextValue;
 import edu.stanford.nlp.sempre.Json;
@@ -25,249 +26,292 @@ import fig.basic.Option;
 public class RobotWorld extends World {
     public final static String SELECT = "S";
     private int currentID;
-    
+    private Jedis jedis;
 
     // Returns current unused ID
     private int incrementAndGetID() {
-	currentID++;
-	return currentID;
+        currentID++;
+        return currentID;
     }
 
     // Finds highest ID in world; next highest is unused
     private void setStartID() {
-	for (Item p : allItems) {
-	    int id = ((Point) p).id;
-	    if (id > currentID) {
-		currentID = id;
-	    }
-	}
+        for (Item p : allItems) {
+            int id = ((Point) p).id;
+            if (id > currentID) {
+                currentID = id;
+            }
+        }
     }
-    
+
     public static RobotWorld fromContext(ContextValue context) {
-	if (context == null || context.graph == null) {
-	    return fromJSON("[[[\"S\"],0,0,0,0,[0,0,0,0],\"gray\"]]");
-	}
-	NaiveKnowledgeGraph graph = (NaiveKnowledgeGraph) context.graph;
-	String wallString = ((StringValue) graph.triples.get(0).e1).value;
-	return fromJSON(wallString);
+        if (context == null || context.graph == null) {
+            return fromJSON("[[[\"S\"],0,0,0,0,[0,0,0,0],\"gray\"]]");
+        }
+        NaiveKnowledgeGraph graph = (NaiveKnowledgeGraph) context.graph;
+        String wallString = ((StringValue) graph.triples.get(0).e1).value;
+        return fromJSON(wallString);
     }
 
     public void base(int x, int y) {
-	Point basepoint = new Point(incrementAndGetID(), x, y, 0, Quaternion.ZERO, Color.Fake.toString());
-	this.allItems = new HashSet<>(this.allItems);
-	this.selected = new HashSet<>(this.selected);
-	allItems.add(basepoint);
-	selected.add(basepoint);
+        Point basepoint = new Point(incrementAndGetID(), x, y, 0, Quaternion.ZERO, Color.Fake.toString());
+        this.allItems = new HashSet<>(this.allItems);
+        this.selected = new HashSet<>(this.selected);
+        allItems.add(basepoint);
+        selected.add(basepoint);
     }
 
     public Set<Item> origin() {
-	for (Item i : allItems) {
-	    Point b = (Point) i;
-	    if (b.x == 0 && b.y == 0 && b.z == 0)
-		return Sets.newHashSet(b);
-	}
-	Point basepoint = new Point(incrementAndGetID(), 0, 0, 0, Quaternion.ZERO, Color.Fake.toString());
-	return Sets.newHashSet(basepoint);
+        for (Item i : allItems) {
+            Point b = (Point) i;
+            if (b.x == 0 && b.y == 0 && b.z == 0)
+                return Sets.newHashSet(b);
+        }
+        Point basepoint = new Point(incrementAndGetID(), 0, 0, 0, Quaternion.ZERO, Color.Fake.toString());
+        return Sets.newHashSet(basepoint);
     }
 
     @SuppressWarnings("unchecked")
     public RobotWorld(Set<Item> pointset) {
-	super();
-	this.allItems = pointset;
-	this.selected = pointset.stream().filter(b -> ((Point) b).names.contains(SELECT)).collect(Collectors.toSet());
-	this.selected.forEach(i -> i.names.remove(SELECT));
-	setStartID();
+        super();
+        this.allItems = pointset;
+        this.selected = pointset.stream().filter(b -> ((Point) b).names.contains(SELECT)).collect(Collectors.toSet());
+        this.selected.forEach(i -> i.names.remove(SELECT));
+        this.jedis = new Jedis("localhost", 6379);
+        setStartID();
+    }
+
+    // Send current world state to redis server usimg hashes
+    private void pointToRedis(Point p) {
+        String pointSet = "points";
+        String point = "p:" + p.id;
+
+        // Set of all points
+        jedis.zadd(pointSet, p.id, point);
+
+        // Position
+        jedis.hset(point, "x", String.valueOf(p.x));
+        jedis.hset(point, "y", String.valueOf(p.y));
+        jedis.hset(point, "z", String.valueOf(p.z));
+
+        // Color
+        jedis.hset(point, "color", p.color.toString());
+
+        // Rotation Quaternion
+        jedis.hset(point, "q0", String.valueOf(p.rotate.getQ0()));
+        jedis.hset(point, "q1", String.valueOf(p.rotate.getQ1()));
+        jedis.hset(point, "q2", String.valueOf(p.rotate.getQ2()));
+        jedis.hset(point, "q3", String.valueOf(p.rotate.getQ3()));
+
+        // Selected
+        jedis.hset(point, "selected", String.valueOf(p.names.contains("S")));
+
+        // Name & Point-specific fields
+        if (p.names.contains("PEPoint")) {
+            PEPoint pe = (PEPoint) p;
+            jedis.hset(point, "name", "PEPoint");
+            jedis.hset(point, "attract", String.valueOf(pe.attract));
+        } else if (p.names.contains("OpPoint")) {
+            jedis.hset(point, "name", "OpPoint");
+            OpPoint op = (OpPoint) p;
+            jedis.hset(point, "frame", String.valueOf(op.frame));
+        } else {
+            jedis.hset(point, "name", "Point");
+        }
     }
 
     // only use names S to communicate with client, internally it's just select variable
     @Override
     public String toJSON() {
-	return Json.writeValueAsStringHard(allItems.stream().map(c -> {
-		    Point b = ((Point) c).clone();
-		    if (selected.contains(b))
-			b.names.add("S");
-		    return b.toJSON();
-		}).collect(Collectors.toList()));
+        // Since world recreated, need to flush & add all keys every time. Ugly, but necessary?
+        jedis.flushAll();
+        return Json.writeValueAsStringHard(allItems.stream().map(c -> {
+            Point b = ((Point) c).clone();
+            if (selected.contains(b))
+                b.names.add("S");
+            pointToRedis(b);
+            return b.toJSON();
+        }).collect(Collectors.toList()));
     }
 
     private static RobotWorld fromJSON(String wallString) {
-	@SuppressWarnings("unchecked")
-	List<List<Object>> itemstr = Json.readValueHard(wallString, List.class);
-	Set<Item> items = itemstr.stream().map(c -> {
-		List<String> types = (List) c.get(0);
-		if (types.contains("PEPoint")) {
-		    return PEPoint.fromJSONObject(c);
-		} else if (types.contains("OpPoint")) {
-		    return OpPoint.fromJSONObject(c);
-		} else {
-		    return Point.fromJSONObject(c);
-		}
-	    }).collect(Collectors.toSet());
-	return new RobotWorld(items);
+        @SuppressWarnings("unchecked")
+        List<List<Object>> itemstr = Json.readValueHard(wallString, List.class);
+        Set<Item> items = itemstr.stream().map(c -> {
+            List<String> types = (List) c.get(0);
+            if (types.contains("PEPoint")) {
+                return PEPoint.fromJSONObject(c);
+            } else if (types.contains("OpPoint")) {
+                return OpPoint.fromJSONObject(c);
+            } else {
+                return Point.fromJSONObject(c);
+            }
+        }).collect(Collectors.toSet());
+        return new RobotWorld(items);
     }
 
     @Override
     public Set<Item> has(String rel, Set<Object> values) {
-	return this.allItems.stream().filter(i -> values.contains(i.get(rel))).collect(Collectors.toSet());
+        return this.allItems.stream().filter(i -> values.contains(i.get(rel))).collect(Collectors.toSet());
     }
 
     @Override
     public Set<Object> get(String rel, Set<Item> subset) {
-	return subset.stream().map(i -> i.get(rel)).collect(Collectors.toSet());
+        return subset.stream().map(i -> i.get(rel)).collect(Collectors.toSet());
     }
 
     @Override
     public void update(String rel, Object value, Set<Item> selected) {
-	selected.forEach(i -> i.update(rel, value));
-	keyConsistency();
+        selected.forEach(i -> i.update(rel, value));
+        keyConsistency();
     }
 
     // if selected no longer in all, make it fake colored and add to all;
     // likewise, if some fake colored point is no longer selected, remove it
     @Override
     public void merge() {
-	Sets.difference(selected, allItems).forEach(i -> ((Point) i).color = Color.Fake);
-	allItems.removeIf(c -> ((Point) c).color.equals(Color.Fake) && !this.selected.contains(c));
-	allItems.addAll(selected);
+        Sets.difference(selected, allItems).forEach(i -> ((Point) i).color = Color.Fake);
+        allItems.removeIf(c -> ((Point) c).color.equals(Color.Fake) && !this.selected.contains(c));
+        allItems.addAll(selected);
     }
 
     public void move(String dir, Set<Item> selected) {
-	selected.forEach(b -> ((Point) b).move(Direction.fromString(dir)));
-	keyConsistency();
+        selected.forEach(b -> ((Point) b).move(Direction.fromString(dir)));
+        keyConsistency();
     }
 
     public void add(String colorstr, String dirstr, Set<Item> selected) {
-	Direction dir = Direction.fromString(dirstr);
+        Direction dir = Direction.fromString(dirstr);
 
-	if (dir == Direction.None) { // add here
-	    selected.forEach(b -> ((Point) b).color = Color.fromString(colorstr));
-	} else {
-	    Set<Item> extremePoints = extremePoints(dir, selected);
-	    this.allItems.addAll(extremePoints.stream().map(c -> {
-			Point d = ((Point) c).copy(dir);
-			return new Point(incrementAndGetID(), d.x, d.y, d.z, d.rotate, colorstr);
-		    }).collect(Collectors.toList()));
-	}
+        if (dir == Direction.None) { // add here
+            selected.forEach(b -> ((Point) b).color = Color.fromString(colorstr));
+        } else {
+            Set<Item> extremePoints = extremePoints(dir, selected);
+            this.allItems.addAll(extremePoints.stream().map(c -> {
+                Point d = ((Point) c).copy(dir);
+                return new Point(incrementAndGetID(), d.x, d.y, d.z, d.rotate, colorstr);
+            }).collect(Collectors.toList()));
+        }
     }
 
     // Set goal position in coordinate system
     public void goal(int x, int y, int z) {
-	PEPoint newGoal = new PEPoint(incrementAndGetID(), x, y, z, Quaternion.ZERO, "green", true);
-	this.allItems.add(newGoal);
+        PEPoint newGoal = new PEPoint(incrementAndGetID(), x, y, z, Quaternion.ZERO, "green", true);
+        this.allItems.add(newGoal);
     }
 
     // Set obstacle position in coordinate system
     public void block(int x, int y, int z) {
-	PEPoint newObstacle = new PEPoint(incrementAndGetID(), x, y, z, Quaternion.ZERO, "red", false);
-	this.allItems.add(newObstacle);
+        PEPoint newObstacle = new PEPoint(incrementAndGetID(), x, y, z, Quaternion.ZERO, "red", false);
+        this.allItems.add(newObstacle);
     }
 
     // Goto goal block with linear trajectory
     // Takes in color string of destination block
     public void lgoto(String colorstr, Set<Item> selected) {
-    	Point oldDest = null;
-    	for (Item c : allItems) {
-    		Point choice = (Point) c;
-    		if (choice.color.toString().equals(colorstr)) {
-    			oldDest = choice;
-    		}
-    	}
-    	// Going to nonexistent color in world
-    	if (oldDest == null) {
-    		return;
-    	}
-    	final Point dest = oldDest;
-		selected.forEach(b -> {
-			Point start = (Point) b;
-			double increment = 16;
-			for (int i = 0; i < increment; i++) {
-				double xDiff = start.x + i * (dest.x - start.x) / increment;
-				double yDiff = start.y + i * (dest.y - start.y) / increment;
-				double zDiff = start.z + i * (dest.z - start.z) / increment;
-				Point mid = new Point(0, (int)Math.round(xDiff), (int)Math.round(yDiff), (int)Math.round(zDiff), Quaternion.ZERO, "black");
-				this.allItems.add(mid);
-			}
-			});
+        Point oldDest = null;
+        for (Item c : allItems) {
+            Point choice = (Point) c;
+            if (choice.color.toString().equals(colorstr)) {
+                oldDest = choice;
+            }
+        }
+        // Going to nonexistent color in world
+        if (oldDest == null) {
+            return;
+        }
+        final Point dest = oldDest;
+        selected.forEach(b -> {
+            Point start = (Point) b;
+            double increment = 16;
+            for (int i = 0; i < increment; i++) {
+                double xDiff = start.x + i * (dest.x - start.x) / increment;
+                double yDiff = start.y + i * (dest.y - start.y) / increment;
+                double zDiff = start.z + i * (dest.z - start.z) / increment;
+                Point mid = new Point(0, (int)Math.round(xDiff), (int)Math.round(yDiff), (int)Math.round(zDiff), Quaternion.ZERO, "black");
+                this.allItems.add(mid);
+            }
+        });
     }
 
     // Get points at extreme positions
     public Set<Item> veryx(String dirstr, Set<Item> selected) {
-	Direction dir = Direction.fromString(dirstr);
-	switch (dir) {
-	case Back:
-	    return argmax(c -> c.x, selected);
-	case Front:
-	    return argmax(c -> -c.x, selected);
-	case Left:
-	    return argmax(c -> c.y, selected);
-	case Right:
-	    return argmax(c -> -c.y, selected);
-	case Top:
-	    return argmax(c -> c.z, selected);
-	case Bot:
-	    return argmax(c -> -c.z, selected);
-	default:
-	    throw new RuntimeException("invalid direction");
-	}
+        Direction dir = Direction.fromString(dirstr);
+        switch (dir) {
+            case Back:
+            return argmax(c -> c.x, selected);
+            case Front:
+            return argmax(c -> -c.x, selected);
+            case Left:
+            return argmax(c -> c.y, selected);
+            case Right:
+            return argmax(c -> -c.y, selected);
+            case Top:
+            return argmax(c -> c.z, selected);
+            case Bot:
+            return argmax(c -> -c.z, selected);
+            default:
+            throw new RuntimeException("invalid direction");
+        }
     }
 
     // return retrieved from allitems, along with any potential empty selectors
     public Set<Item> adj(String dirstr, Set<Item> selected) {
-	Direction dir = Direction.fromString(dirstr);
-	Set<Item> selectors = selected.stream().map(c -> {
-		Point b = ((Point) c).copy(dir);
-		b.color = Color.Fake;
-		return b;
-	    }).collect(Collectors.toSet());
+        Direction dir = Direction.fromString(dirstr);
+        Set<Item> selectors = selected.stream().map(c -> {
+            Point b = ((Point) c).copy(dir);
+            b.color = Color.Fake;
+            return b;
+        }).collect(Collectors.toSet());
 
-	this.allItems.addAll(selectors);
+        this.allItems.addAll(selectors);
 
-	Set<Item> actual = allItems.stream().filter(c -> selectors.contains(c)).collect(Collectors.toSet());
+        Set<Item> actual = allItems.stream().filter(c -> selectors.contains(c)).collect(Collectors.toSet());
 
-	return actual;
+        return actual;
     }
 
     public static Set<Item> argmax(Function<Point, Integer> f, Set<Item> items) {
-	int maxvalue = Integer.MIN_VALUE;
-	for (Item i : items) {
-	    int cvalue = f.apply((Point) i);
-	    if (cvalue > maxvalue)
-		maxvalue = cvalue;
-	}
-	final int maxValue = maxvalue;
-	return items.stream().filter(c -> f.apply((Point) c) >= maxValue).collect(Collectors.toSet());
+        int maxvalue = Integer.MIN_VALUE;
+        for (Item i : items) {
+            int cvalue = f.apply((Point) i);
+            if (cvalue > maxvalue)
+                maxvalue = cvalue;
+        }
+        final int maxValue = maxvalue;
+        return items.stream().filter(c -> f.apply((Point) c) >= maxValue).collect(Collectors.toSet());
     }
 
     @Override
     public void noop() {
-	keyConsistency();
+        keyConsistency();
     }
 
     // get points at outer locations
     private Set<Item> extremePoints(Direction dir, Set<Item> selected) {
-	Set<Item> realPoints = realPoints(allItems);
-	return selected.stream().map(c -> {
-		Point d = (Point) c;
-		while (realPoints.contains(d.copy(dir)))
-		    d = d.copy(dir);
-		return d;
-	    }).collect(Collectors.toSet());
+        Set<Item> realPoints = realPoints(allItems);
+        return selected.stream().map(c -> {
+            Point d = (Point) c;
+            while (realPoints.contains(d.copy(dir)))
+                d = d.copy(dir);
+            return d;
+        }).collect(Collectors.toSet());
     }
 
     // ensures key coherence on mutations
     private void refreshSet(Set<Item> set) {
-	List<Item> s = new LinkedList<>(set);
-	set.clear();
-	set.addAll(s);
+        List<Item> s = new LinkedList<>(set);
+        set.clear();
+        set.addAll(s);
     }
 
     private void keyConsistency() {
-	refreshSet(allItems);
-	refreshSet(selected);
-	refreshSet(previous);
+        refreshSet(allItems);
+        refreshSet(selected);
+        refreshSet(previous);
     }
 
     private Set<Item> realPoints(Set<Item> all) {
-	return all.stream().filter(b -> !((Point) b).color.equals(Color.Fake)).collect(Collectors.toSet());
+        return all.stream().filter(b -> !((Point) b).color.equals(Color.Fake)).collect(Collectors.toSet());
     }
 }
