@@ -90,18 +90,16 @@ public class RobotWorld extends World {
         jedis.zadd(pointSet, p.id, point);
 
         // Position
-        jedis.hset(point, "x", String.valueOf(p.x));
-        jedis.hset(point, "y", String.valueOf(p.y));
-        jedis.hset(point, "z", String.valueOf(p.z));
+        jedis.hset(point, "position", "[" + p.x + ", " + p.y + ", " + p.z + "]");
 
         // Color
         jedis.hset(point, "color", p.color.toString());
 
         // Rotation Quaternion
-        jedis.hset(point, "q0", String.valueOf(p.rotate.getQ0()));
-        jedis.hset(point, "q1", String.valueOf(p.rotate.getQ1()));
-        jedis.hset(point, "q2", String.valueOf(p.rotate.getQ2()));
-        jedis.hset(point, "q3", String.valueOf(p.rotate.getQ3()));
+        jedis.hset(point, "rotate", "[" + p.rotate.getQ0() +
+                                     ", " + p.rotate.getQ1() +
+                                     ", " + p.rotate.getQ2() +
+                                     ", " + p.rotate.getQ3() + "]");
 
         // Selected
         jedis.hset(point, "selected", String.valueOf(p.names.contains("S")));
