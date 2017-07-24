@@ -87,42 +87,44 @@ public class RobotWorld extends World {
         String point = "p:" + p.id;
 
         // Set of all points
-        jedis.zadd(pointSet, p.id, point);
+        jedis.sadd(pointSet, p.id, point);
 
         // Position
-        jedis.hset(point, "position", "[" + p.x + ", " + p.y + ", " + p.z + "]");
+        jedis.set(point + ":position", p.x + " " + p.y + " " + p.z);
 
         // Color
-        jedis.hset(point, "color", p.color.toString());
+        jedis.set(point + ":color", p.color.toString());
 
         // Rotation Quaternion
-        jedis.hset(point, "rotate", "[" + p.rotate.getQ0() +
-                                     ", " + p.rotate.getQ1() +
-                                     ", " + p.rotate.getQ2() +
-                                     ", " + p.rotate.getQ3() + "]");
+        jedis.set(point + ":rotate", p.rotate.getQ0() +
+                                     " " + p.rotate.getQ1() +
+                                     " " + p.rotate.getQ2() +
+                                     " " + p.rotate.getQ3());
 
         // Selected
-        jedis.hset(point, "selected", String.valueOf(p.names.contains("S")));
+        jedis.set(point + ":selected", String.valueOf(p.names.contains("S")));
 
         // Name & Point-specific fields
         if (p.names.contains("PEPoint")) {
             PEPoint pe = (PEPoint) p;
-            jedis.hset(point, "name", "PEPoint");
-            jedis.hset(point, "attract", String.valueOf(pe.attract));
+            jedis.set(point + ":name", "PEPoint");
+            jedis.set(point + ":attract", String.valueOf(pe.attract));
         } else if (p.names.contains("OpPoint")) {
-            jedis.hset(point, "name", "OpPoint");
+            jedis.set(point + ":name", "OpPoint");
             OpPoint op = (OpPoint) p;
-            jedis.hset(point, "frame", String.valueOf(op.frame));
+            jedis.set(point + ":frame", String.valueOf(op.frame));
         } else {
-            jedis.hset(point, "name", "Point");
+            jedis.set(point + ":name", "Point");
         }
     }
 
     // only use names S to communicate with client, internally it's just select variable
     @Override
     public String toJSON() {
-        // Since world recreated, need to flush & add all keys every time. Ugly, but necessary?
-        jedis.flushAll();
+        // Deletes set of all contained points in world to refresh list every iteration.
+        // WARNING: Doesn't delete the points themselves, only their connections,
+        // so data still all stored within redis.
+        jedis.del("points");
         return Json.writeValueAsStringHard(allItems.stream().map(c -> {
             Point b = ((Point) c).clone();
             if (selected.contains(b))
