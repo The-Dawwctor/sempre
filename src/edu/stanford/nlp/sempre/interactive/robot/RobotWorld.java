@@ -87,7 +87,7 @@ public class RobotWorld extends World {
         String point = "p:" + p.id;
 
         // Set of all points
-        jedis.sadd(pointSet, p.id, point);
+        jedis.sadd(pointSet, point);
 
         // Position
         jedis.set(point + ":position", p.x + " " + p.y + " " + p.z);
@@ -106,8 +106,8 @@ public class RobotWorld extends World {
 
         // Name & Point-specific fields
         if (p.names.contains("PEPoint")) {
-            PEPoint pe = (PEPoint) p;
             jedis.set(point + ":name", "PEPoint");
+            PEPoint pe = (PEPoint) p;
             jedis.set(point + ":attract", String.valueOf(pe.attract));
         } else if (p.names.contains("OpPoint")) {
             jedis.set(point + ":name", "OpPoint");
@@ -118,15 +118,20 @@ public class RobotWorld extends World {
         }
     }
 
+    // Communicates state of the world to web client with JSON and redis client with formatting
     // only use names S to communicate with client, internally it's just select variable
     @Override
     public String toJSON() {
+        // Redis code
         // Deletes set of all contained points in world to refresh list every iteration.
-        // WARNING: Doesn't delete the points themselves, only their connections,
+        // WARNING: Doesn't delete points themselves, only their connections,
         // so data still all stored within redis.
         jedis.del("points");
+        jedis.set("highestID", String.valueOf(currentID));
+
+        // JSON code
         return Json.writeValueAsStringHard(allItems.stream().map(c -> {
-            Point b = ((Point) c).clone();
+            Point b = (Point) c;
             if (selected.contains(b))
                 b.names.add("S");
             pointToRedis(b);
