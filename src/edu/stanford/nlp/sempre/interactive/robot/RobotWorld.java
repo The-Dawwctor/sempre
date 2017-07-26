@@ -83,17 +83,13 @@ public class RobotWorld extends World {
 
     // Send current world state to redis server usimg hashes
     private void pointToRedis(Point p) {
-        String pointSet = "points";
         String point = "p:" + p.id;
 
         // Set of all points
-        jedis.sadd(pointSet, point);
+        jedis.sadd("points", point);
 
         // Position
         jedis.set(point + ":position", p.x + " " + p.y + " " + p.z);
-
-        // Color
-        jedis.set(point + ":color", p.color.toString());
 
         // Rotation Quaternion
         jedis.set(point + ":rotate", p.rotate.getQ0() +
@@ -101,20 +97,23 @@ public class RobotWorld extends World {
                                      " " + p.rotate.getQ2() +
                                      " " + p.rotate.getQ3());
 
+        // Color
+        jedis.hset(point, "color", p.color.toString());
+
         // Selected
-        jedis.set(point + ":selected", String.valueOf(p.names.contains("S")));
+        jedis.hset(point, "selected", String.valueOf(p.names.contains("S")));
 
         // Name & Point-specific fields
         if (p.names.contains("PEPoint")) {
-            jedis.set(point + ":name", "PEPoint");
+            jedis.hset(point, "name", "PEPoint");
             PEPoint pe = (PEPoint) p;
-            jedis.set(point + ":attract", String.valueOf(pe.attract));
+            jedis.hset(point, "attract", String.valueOf(pe.attract));
         } else if (p.names.contains("OpPoint")) {
-            jedis.set(point + ":name", "OpPoint");
+            jedis.hset(point, "name", "OpPoint");
             OpPoint op = (OpPoint) p;
-            jedis.set(point + ":frame", String.valueOf(op.frame));
+            jedis.hset(point, "frame", String.valueOf(op.frame));
         } else {
-            jedis.set(point + ":name", "Point");
+            jedis.hset(point, "name", "Point");
         }
     }
 
