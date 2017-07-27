@@ -78,64 +78,23 @@ public class RobotWorld extends World {
         this.selected = pointset.stream().filter(b -> ((Point) b).names.contains(SELECT)).collect(Collectors.toSet());
         this.selected.forEach(i -> i.names.remove(SELECT));
         this.jedis = new Jedis("localhost", 6379);
+        this.jedis.select(1);
         setStartID();
     }
 
-    // Send current world state to redis server usimg hashes
-    private void pointToRedis(Point p) {
-        String point = "p:" + p.id;
-
-        // Set of all points
-        jedis.sadd("points", point);
-
-        // Position
-        jedis.set(point + ":position", p.x + " " + p.y + " " + p.z);
-
-        // Rotation Quaternion
-        jedis.set(point + ":rotate", p.rotate.getQ0() +
-                                     " " + p.rotate.getQ1() +
-                                     " " + p.rotate.getQ2() +
-                                     " " + p.rotate.getQ3());
-
-        // Color
-        jedis.hset(point, "color", p.color.toString());
-
-        // Selected
-        jedis.hset(point, "selected", String.valueOf(p.names.contains("S")));
-
-        // Name & Point-specific fields
-        if (p.names.contains("PEPoint")) {
-            jedis.hset(point, "name", "PEPoint");
-            PEPoint pe = (PEPoint) p;
-            jedis.hset(point, "attract", String.valueOf(pe.attract));
-        } else if (p.names.contains("OpPoint")) {
-            jedis.hset(point, "name", "OpPoint");
-            OpPoint op = (OpPoint) p;
-            jedis.hset(point, "frame", String.valueOf(op.frame));
-        } else {
-            jedis.hset(point, "name", "Point");
-        }
-    }
-
-    // Communicates state of the world to web client with JSON and redis client with formatting
+    // Communicates state of the world to web client with JSON and redis client
     // only use names S to communicate with client, internally it's just select variable
     @Override
     public String toJSON() {
-        // Redis code
-        // Deletes set of all contained points in world to refresh list every iteration.
-        // WARNING: Doesn't delete points themselves, only their connections,
-        // so data still all stored within redis.
-        jedis.del("points");
-        jedis.set("highestID", String.valueOf(currentID));
-
         // JSON code
-        return Json.writeValueAsStringHard(allItems.stream().map(c -> {
+        String result = Json.writeValueAsStringHard(allItems.stream().map(c -> {
             Point b = (Point) c;
             if (selected.contains(b))
                 b.names.add("S");
-            pointToRedis(b);
             return b.toJSON();
         }).collect(Collectors.toList()));
+        jedis.publish("nrc-world-state", result);
+        return result;
     }
 
     private static RobotWorld fromJSON(String wallString) {
