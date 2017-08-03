@@ -3,13 +3,12 @@
 (include dal.grammar)
 
 # domain specific actions:
-(def @put put)
-(def @base base)
 (def @add add)
 (def @move move)
-(def @goal goal)
 (def @block block)
+(def @go_to go_to)
 (def @lgoto lgoto)
+(def @send send)
 
 # syntactic sugar
 (def @veryx veryx)
@@ -19,9 +18,8 @@
 # Rule.defaultIsFloating should be false
 
 # utilities
-(rule $Action (base $Number $Number) (lambda x (lambda y (: @base (var x) (var y)))) (anchored 1))
 (rule $Action (noop) (ConstantFn (: noop)) (anchored 1))
-
+(rule $Action (send) (ConstantFn (: send)) (anchored 1))
 (rule $Set (origin) (ConstantFn (call origin)) (anchored 1))
 
 # primitive actions
@@ -30,10 +28,11 @@
 (rule $Action (move $Direction) (lambda d (: @move (var d))) (anchored 1))
 
 # primitive actions with arguments
-(rule $Action (goal $Number $Number $Number) (lambda x (lambda y (lambda z (: @goal (var x) (var y) (var z))))) (anchored 1))
+(rule $Action (add $Color $Number $Number $Number) (lambda w (lambda x (lambda y (lambda z (: @add (var w) (var x) (var y) (var z)))))) (anchored 1))
 (rule $Action (block $Number $Number $Number) (lambda x (lambda y (lambda z (: @block (var x) (var y) (var z))))) (anchored 1))
 
 # trajectory generation actions
+(rule $Action (goto $Color) (lambda c (: @go_to (var c))) (anchored 1))
 (rule $Action (lgoto $Color) (lambda c (: @lgoto (var c))) (anchored 1))
 
 # cube to cube relations
@@ -51,7 +50,7 @@
 )
 (rule $Extreme (very $Direction) (IdentityFn) (anchored 1))
 
-(for @rel (col row height color name age)
+(for @rel (col row height color name)
   (rule $Rel (@rel) (ConstantFn @rel) (anchored 1))
 )
 
@@ -72,11 +71,7 @@
 # (rule $Action ($Color $Direction) (lambda c (lambda d (: @add (var c) (var d)))))
 # (rule $Action ($Direction) (lambda d (: @move (var d))))
 
-# (rule $Set ($Direction $Sets) (lambda d (lambda s
-#			   (call adj (var d) (var s)))))
-# (rule $Set ($Extreme $Sets) (lambda e (lambda s
-#			   (call @veryx (var e) (var s)))))
-# (rule $Set ($Direction) (lambda d
-#			   (call adj (var d))))
-# (rule $Set ($Extreme) (lambda e
-#			   (call @veryx (var e))))
+# (rule $Set ($Direction $Sets) (lambda d (lambda s (call adj (var d) (var s)))))
+# (rule $Set ($Extreme $Sets) (lambda e (lambda s (call @veryx (var e) (var s)))))
+# (rule $Set ($Direction) (lambda d (call adj (var d))))
+# (rule $Set ($Extreme) (lambda e (call @veryx (var e))))

@@ -46,19 +46,11 @@ public class RobotWorld extends World {
 
     public static RobotWorld fromContext(ContextValue context) {
         if (context == null || context.graph == null) {
-            return fromJSON("[[[\"S\"],0,0,0,0,[0,0,0,0],\"gray\"]]");
+            return fromJSON("[]");
         }
         NaiveKnowledgeGraph graph = (NaiveKnowledgeGraph) context.graph;
         String wallString = ((StringValue) graph.triples.get(0).e1).value;
         return fromJSON(wallString);
-    }
-
-    public void base(int x, int y) {
-        Point basepoint = new Point(incrementAndGetID(), x, y, 0, Quaternion.ZERO, Color.Fake.toString());
-        this.allItems = new HashSet<>(this.allItems);
-        this.selected = new HashSet<>(this.selected);
-        allItems.add(basepoint);
-        selected.add(basepoint);
     }
 
     public Set<Item> origin() {
@@ -87,14 +79,12 @@ public class RobotWorld extends World {
     @Override
     public String toJSON() {
         // JSON code
-        String result = Json.writeValueAsStringHard(allItems.stream().map(c -> {
+        return Json.writeValueAsStringHard(allItems.stream().map(c -> {
             Point b = (Point) c;
             if (selected.contains(b))
                 b.names.add("S");
             return b.toJSON();
         }).collect(Collectors.toList()));
-        jedis.publish("nrc-world-state", result);
-        return result;
     }
 
     private static RobotWorld fromJSON(String wallString) {
@@ -143,6 +133,36 @@ public class RobotWorld extends World {
         keyConsistency();
     }
 
+    // Move a certain amount in a certain direction
+    public void move(String dir, int number, Set<Item> selected) {
+        /*
+        switch (dir) {
+            case Back:
+            this.x += number;
+            break;
+            case Front:
+            this.x -= number;
+            break;
+            case Left:
+            this.y += number;
+            break;
+            case Right:
+            this.y -= number;
+            break;
+            case Top:
+            this.z += number;
+            break;
+            case Bot:
+            this.z -= number;
+            break;
+            case None:
+            break;
+        }
+        */
+        selected.forEach(b -> ((Point) b).move(Direction.fromString(dir)));
+        keyConsistency();
+    }
+
     public void add(String colorstr, String dirstr, Set<Item> selected) {
         Direction dir = Direction.fromString(dirstr);
 
@@ -157,9 +177,9 @@ public class RobotWorld extends World {
         }
     }
 
-    // Set goal position in coordinate system
-    public void goal(int x, int y, int z) {
-        PEPoint newGoal = new PEPoint(incrementAndGetID(), x, y, z, Quaternion.ZERO, "green", true);
+    // Add goal position in coordinate system
+    public void add(String colorstr, int x, int y, int z) {
+        PEPoint newGoal = new PEPoint(incrementAndGetID(), x, y, z, Quaternion.ZERO, colorstr, true);
         this.allItems.add(newGoal);
     }
 
@@ -167,6 +187,25 @@ public class RobotWorld extends World {
     public void block(int x, int y, int z) {
         PEPoint newObstacle = new PEPoint(incrementAndGetID(), x, y, z, Quaternion.ZERO, "red", false);
         this.allItems.add(newObstacle);
+    }
+
+    // Goto position of certain color
+    public void go_to(String colorstr) {
+        Point dest = null;
+        for (Item c : allItems) {
+            Point choice = (Point) c;
+            if (choice.color.toString().equals(colorstr)) {
+                dest = choice;
+            }
+        }
+        // Going to nonexistent color in world
+        if (dest == null) {
+            return;
+        }
+        allItems.remove(dest);
+        PEPoint goal = new PEPoint(dest, true);
+        goal.names.add("S");
+        allItems.add(goal);
     }
 
     // Goto goal block with linear trajectory
@@ -243,6 +282,10 @@ public class RobotWorld extends World {
         }
         final int maxValue = maxvalue;
         return items.stream().filter(c -> f.apply((Point) c) >= maxValue).collect(Collectors.toSet());
+    }
+
+    public void send() {
+        jedis.publish("nrc-world-state", toJSON());
     }
 
     @Override

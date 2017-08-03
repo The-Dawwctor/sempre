@@ -71,7 +71,7 @@
 			   ((var r) (var s)))) (anchored 1))
 
 ############### Arithmetic
-(for @op (+ -)
+(for @op (+ - * /)
 (rule $Numbers ($Numbers @op $Number) (lambda n1  (lambda n2
 (@op (var n1) (var n2)))) (anchored 1))
 )
