@@ -79,13 +79,21 @@ SEMPRE has been used in the following papers:
 You must have the following already installed on your system.
 
 - Java 8 (not 7)
-- Ant 1.8.2
-- Ruby 1.8.7 or 1.9
-- wget
-- make (for compiling fig and Virtuoso)
+
+Additionally, run this command to install further dependencies
+    sudo apt-get install ant ruby wget make
+
+In order to run ant interactive and utilize the Quaternion class for Java, go to
+https://commons.apache.org/proper/commons-math/download_math.cgi
+and download the commons-math3-3.6.1-bin.tar.gz binary.
+gunzip Unzip and extract it and copy
+the file commons-math3-3.6.1.jar into the /lib/ directory.
+
+In order to install Jedis, go to https://github.com/xetorthio/jedis/wiki/Getting-started,
+download the latest .jar file from search.maven.org, and copy it to the /lib/ directory.
 
 Other dependencies will be downloaded as you need them.  SEMPRE has been tested
-on Ubuntu Linux 12.04 and MacOS X.  Your mileage will vary depending on how
+on Ubuntu Linux 16.04 and MacOS X.  Your mileage will vary depending on how
 similar your system is.
 
 ## Easy setup
@@ -112,35 +120,6 @@ similar your system is.
 
 To go further, check out the [tutorial](TUTORIAL.md) and then the [full
 documentation](DOCUMENTATION.md).
-
-## Virtuoso graph database
-
-If you will be using natural language to query databases (e.g., Freebase), then
-you will also need to setup your own Virtuoso database (unless someone already
-has done this for you):
-
-For Ubuntu, follow this:
-
-    sudo apt-get install -y automake gawk gperf libtool bison flex libssl-dev
-
-    # Clone the repository
-    ./pull-dependencies virtuoso
-
-    # Make and install
-    cd virtuoso-opensource
-    ./autogen.sh
-    ./configure --prefix=$PWD/install
-    make
-    make install
-    cd ..
-
-on OS/X you can install virtuoso using homebrew by following the instructions
-[here](http://carsten.io/virtuoso-os-on-mac-os/)
-
-To have SEMPRE interact with Virtuoso, the required modules need to be compiled as follow:
-
-    ./pull-dependencies core corenlp freebase
-    ant freebase
 
 # Contribute
 
