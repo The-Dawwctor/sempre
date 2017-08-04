@@ -271,12 +271,13 @@ public class Point extends Item {
 
     @Override
     public int hashCode() {
-        final int prime = 19;
-        int result = 1;
-        result = prime * result + y;
-        result = prime * result + z;
-        result = prime * result + x;
-        return result;
+        // final int prime = 19;
+        // int result = 1;
+        // result = prime * result + y;
+        // result = prime * result + z;
+        // result = prime * result + x;
+        // return result;
+        return id; // Id's should be unique
     }
 
     @Override

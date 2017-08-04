@@ -29,11 +29,6 @@ public class Obstacle extends Point {
         this.names.add("Obstacle");
     }
 
-    public Obstacle(Point p) {
-        this(p.id, p.x, p.y, p.z, p.rotate, p.color.toString());
-        this.names.add("Obstacle");
-    }
-
     @SuppressWarnings("unchecked")
     public static Obstacle fromJSONObject(List<Object> props) {
         Point p = Point.fromJSONObject(props);

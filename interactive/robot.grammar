@@ -30,6 +30,7 @@
 # primitive actions with arguments
 (rule $Action (add $Color $Number $Number $Number) (lambda w (lambda x (lambda y (lambda z (: @add (var w) (var x) (var y) (var z)))))) (anchored 1))
 (rule $Action (block $Number $Number $Number) (lambda x (lambda y (lambda z (: @block (var x) (var y) (var z))))) (anchored 1))
+(rule $Action (move $Direction $Number) (lambda d (lambda n (: @move (var d) (var n)))) (anchored 1))
 
 # trajectory generation actions
 (rule $Action (goto $Color) (lambda c (: @go_to (var c))) (anchored 1))

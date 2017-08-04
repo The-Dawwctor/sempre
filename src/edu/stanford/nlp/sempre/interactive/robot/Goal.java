@@ -35,12 +35,7 @@ public class Goal extends Point {
         this.order = order;
         this.names.add("Goal");
     }
-
-    public Goal(Point p, int order) {
-        this(p.id, p.x, p.y, p.z, p.rotate, p.color.toString(), order);
-        this.names.add("Goal");
-    }
-
+    
     @Override
     @SuppressWarnings("unchecked")
     public Object get(String property) {

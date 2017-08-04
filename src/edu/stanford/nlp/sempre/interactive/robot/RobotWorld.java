@@ -91,6 +91,7 @@ public class RobotWorld extends World {
         this.jedis = new Jedis("localhost", 6379);
         this.jedis.select(1);
         setStartID();
+        setStartOrder();
     }
 
     // Communicates state of the world to web client with JSON and redis client
@@ -154,34 +155,39 @@ public class RobotWorld extends World {
         keyConsistency();
     }
 
-    // Move a certain amount in a certain direction
+    // Move selected elements certain amount in a certain direction
     public void move(String dir, int number, Set<Item> selected) {
-        /*
-        switch (dir) {
-            case Back:
-            this.x += number;
-            break;
-            case Front:
-            this.x -= number;
-            break;
-            case Left:
-            this.y += number;
-            break;
-            case Right:
-            this.y -= number;
-            break;
-            case Top:
-            this.z += number;
-            break;
-            case Bot:
-            this.z -= number;
-            break;
-            case None:
-            break;
+        Direction d = Direction.fromString(dir);
+        for (Item i : selected) {
+            Point p = (Point) i;
+            int newX = p.x;
+            int newY = p.y;
+            int newZ = p.z;
+            switch (d) {
+                case Back:
+                newX += number;
+                break;
+                case Front:
+                newX -= number;
+                break;
+                case Left:
+                newY += number;
+                break;
+                case Right:
+                newY -= number;
+                break;
+                case Top:
+                newZ += number;
+                break;
+                case Bot:
+                newZ -= number;
+                break;
+                case None:
+                break;
+            }
+            Goal newGoal = new Goal(incrementAndGetID(), newX, newY, newZ, p.rotate, p.color.toString(), incrementAndGetOrder());
+            this.allItems.add(newGoal);
         }
-        */
-        selected.forEach(b -> ((Point) b).move(Direction.fromString(dir)));
-        keyConsistency();
     }
 
     public void add(String colorstr, String dirstr, Set<Item> selected) {
@@ -200,8 +206,8 @@ public class RobotWorld extends World {
 
     // Add goal position in coordinate system
     public void add(String colorstr, int x, int y, int z) {
-        Goal newGoal = new Goal(incrementAndGetID(), x, y, z, Quaternion.ZERO, colorstr, incrementAndGetOrder());
-        this.allItems.add(newGoal);
+        Point newPoint = new Point(incrementAndGetID(), x, y, z, Quaternion.ZERO, colorstr);
+        this.allItems.add(newPoint);
     }
 
     // Set obstacle position in coordinate system
@@ -223,9 +229,8 @@ public class RobotWorld extends World {
         if (dest == null) {
             return;
         }
-        allItems.remove(dest);
-        Goal goal = new Goal(dest, incrementAndGetOrder());
-        goal.names.add("S");
+        dest.names.add("S");
+        Goal goal = new Goal(incrementAndGetID(), dest.x, dest.y, dest.z, dest.rotate, dest.color.toString(), incrementAndGetOrder());
         allItems.add(goal);
     }
 
