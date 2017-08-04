@@ -14,39 +14,39 @@ import edu.stanford.nlp.sempre.interactive.robot.Point;
  * can be used to represent a goal or an obstacle to be fed into
  * an operational space controller.
  */
-public class PEPoint extends Point {
-    boolean attract;
+public class Goal extends Point {
+    int order;
     
-    public PEPoint() {
+    public Goal() {
         super();
-        this.attract = false;
-        this.names.add("PEPoint");
+        this.order = 0;
+        this.names.add("Goal");
     }
 
     // used as a key
-    public PEPoint(int x, int y, int z) {
+    public Goal(int x, int y, int z) {
         super(x, y, z);
-        this.attract = false;
-        this.names.add("PEPoint");
+        this.order = 0;
+        this.names.add("Goal");
     }
 
-    public PEPoint(int id, int x, int y, int z, Quaternion rotate, String color, boolean attract) {
+    public Goal(int id, int x, int y, int z, Quaternion rotate, String color, int order) {
         super(id, x, y, z, rotate, color);
-        this.attract = attract;
-        this.names.add("PEPoint");
+        this.order = order;
+        this.names.add("Goal");
     }
 
-    public PEPoint(Point p, boolean attract) {
-        this(p.id, p.x, p.y, p.z, p.rotate, p.color.toString(), attract);
-        this.names.add("PEPoint");
+    public Goal(Point p, int order) {
+        this(p.id, p.x, p.y, p.z, p.rotate, p.color.toString(), order);
+        this.names.add("Goal");
     }
 
     @Override
     @SuppressWarnings("unchecked")
     public Object get(String property) {
         Object propval;
-        if (property.equals("attract"))
-            propval = new Boolean(this.attract);
+        if (property.equals("order"))
+            propval = new Integer(this.order);
         else
             propval = super.get(property);
         return propval;
@@ -55,17 +55,17 @@ public class PEPoint extends Point {
     @Override
     @SuppressWarnings("unchecked")
     public void update(String property, Object value) {
-        if (property.equals("attract") && value instanceof Boolean) {
-            this.attract = (Boolean) value;
+        if (property.equals("order") && value instanceof Integer) {
+            this.order = (Integer) value;
         } else {
             super.update(property, value);
         }
     }
 
     @SuppressWarnings("unchecked")
-    public static PEPoint fromJSONObject(List<Object> props) {
+    public static Goal fromJSONObject(List<Object> props) {
         Point p = Point.fromJSONObject(props);
-        PEPoint retpoint = new PEPoint();
+        Goal retpoint = new Goal();
         retpoint.names = p.names;
         retpoint.id = p.id;
         retpoint.x = p.x;
@@ -73,19 +73,19 @@ public class PEPoint extends Point {
         retpoint.z = p.z;
         retpoint.rotate = p.rotate;
         retpoint.color = p.color;
-        retpoint.attract = ((Boolean) props.get(7));
+        retpoint.order = ((Integer) props.get(7));
         return retpoint;
     }
 
     @SuppressWarnings("unchecked")
     public Object toJSON() {
-        List<Object> pepoint = (List)super.toJSON();
-        pepoint.add(attract);
-        return pepoint;
+        List<Object> Goal = (List)super.toJSON();
+        Goal.add(order);
+        return Goal;
     }
 
     @Override
-    public PEPoint clone() {
-        return new PEPoint(this.id, this.x, this.y, this.z, this.rotate, this.color.toString(), this.attract);
+    public Goal clone() {
+        return new Goal(this.id, this.x, this.y, this.z, this.rotate, this.color.toString(), this.order);
     }
 }

@@ -26,20 +26,39 @@ import fig.basic.Option;
 public class RobotWorld extends World {
     public final static String SELECT = "S";
     private int currentID;
+    private int currentOrder;
     private Jedis jedis;
 
-    // Returns current unused ID
+    // Returns next unused ID
     private int incrementAndGetID() {
         currentID++;
         return currentID;
     }
 
-    // Finds highest ID in world; next highest is unused
+    // Returns next unused order
+    private int incrementAndGetOrder() {
+        currentOrder++;
+        return currentOrder;
+    }
+
+    // Finds highest ID in world; next highest unused
     private void setStartID() {
         for (Item p : allItems) {
             int id = ((Point) p).id;
             if (id > currentID) {
                 currentID = id;
+            }
+        }
+    }
+
+    // Finds highest order in world; next highest unused
+    private void setStartOrder() {
+        for (Item p : allItems) {
+            if (p instanceof Goal) {
+                int order = ((Goal) p).order;
+                if (order > currentOrder) {
+                    currentOrder = order;
+                }
             }
         }
     }
@@ -92,8 +111,10 @@ public class RobotWorld extends World {
         List<List<Object>> itemstr = Json.readValueHard(wallString, List.class);
         Set<Item> items = itemstr.stream().map(c -> {
             List<String> types = (List) c.get(0);
-            if (types.contains("PEPoint")) {
-                return PEPoint.fromJSONObject(c);
+            if (types.contains("Goal")) {
+                return Goal.fromJSONObject(c);
+            } else if (types.contains("Obstacle")) {
+                return Obstacle.fromJSONObject(c);
             } else if (types.contains("OpPoint")) {
                 return OpPoint.fromJSONObject(c);
             } else {
@@ -179,13 +200,13 @@ public class RobotWorld extends World {
 
     // Add goal position in coordinate system
     public void add(String colorstr, int x, int y, int z) {
-        PEPoint newGoal = new PEPoint(incrementAndGetID(), x, y, z, Quaternion.ZERO, colorstr, true);
+        Goal newGoal = new Goal(incrementAndGetID(), x, y, z, Quaternion.ZERO, colorstr, incrementAndGetOrder());
         this.allItems.add(newGoal);
     }
 
     // Set obstacle position in coordinate system
     public void block(int x, int y, int z) {
-        PEPoint newObstacle = new PEPoint(incrementAndGetID(), x, y, z, Quaternion.ZERO, "red", false);
+        Obstacle newObstacle = new Obstacle(incrementAndGetID(), x, y, z, Quaternion.ZERO, "red");
         this.allItems.add(newObstacle);
     }
 
@@ -203,7 +224,7 @@ public class RobotWorld extends World {
             return;
         }
         allItems.remove(dest);
-        PEPoint goal = new PEPoint(dest, true);
+        Goal goal = new Goal(dest, incrementAndGetOrder());
         goal.names.add("S");
         allItems.add(goal);
     }
