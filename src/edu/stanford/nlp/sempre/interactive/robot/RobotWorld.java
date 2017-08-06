@@ -41,19 +41,13 @@ public class RobotWorld extends World {
         return currentOrder;
     }
 
-    // Finds highest ID in world; next highest unused
-    private void setStartID() {
+    // Finds highest ID and order in world; next highest unused
+    private void setStartNums() {
         for (Item p : allItems) {
             int id = ((Point) p).id;
             if (id > currentID) {
                 currentID = id;
             }
-        }
-    }
-
-    // Finds highest order in world; next highest unused
-    private void setStartOrder() {
-        for (Item p : allItems) {
             if (p instanceof Goal) {
                 int order = ((Goal) p).order;
                 if (order > currentOrder) {
@@ -90,8 +84,7 @@ public class RobotWorld extends World {
         this.selected.forEach(i -> i.names.remove(SELECT));
         this.jedis = new Jedis("localhost", 6379);
         this.jedis.select(1);
-        setStartID();
-        setStartOrder();
+        setStartNums();
     }
 
     // Communicates state of the world to web client with JSON and redis client
@@ -101,8 +94,9 @@ public class RobotWorld extends World {
         // JSON code
         return Json.writeValueAsStringHard(allItems.stream().map(c -> {
             Point b = (Point) c;
-            if (selected.contains(b))
-                b.names.add("S");
+            if (selected.contains(b)) {
+                b.names.add(SELECT);
+            }
             return b.toJSON();
         }).collect(Collectors.toList()));
     }
@@ -127,7 +121,7 @@ public class RobotWorld extends World {
 
     @Override
     public Set<Item> has(String rel, Set<Object> values) {
-        return this.allItems.stream().filter(i -> values.contains(i.get(rel))).collect(Collectors.toSet());
+        return allItems.stream().filter(i -> values.contains(i.get(rel))).collect(Collectors.toSet());
     }
 
     @Override
@@ -146,19 +140,15 @@ public class RobotWorld extends World {
     @Override
     public void merge() {
         Sets.difference(selected, allItems).forEach(i -> ((Point) i).color = Color.Fake);
-        allItems.removeIf(c -> ((Point) c).color.equals(Color.Fake) && !this.selected.contains(c));
+        allItems.removeIf(c -> ((Point) c).color.equals(Color.Fake) && !selected.contains(c));
         allItems.addAll(selected);
-    }
-
-    public void move(String dir, Set<Item> selected) {
-        selected.forEach(b -> ((Point) b).move(Direction.fromString(dir)));
-        keyConsistency();
     }
 
     // Move selected elements certain amount in a certain direction
     public void move(String dir, int number, Set<Item> selected) {
         Direction d = Direction.fromString(dir);
         for (Item i : selected) {
+            selected.remove(i);
             Point p = (Point) i;
             int newX = p.x;
             int newY = p.y;
@@ -186,7 +176,8 @@ public class RobotWorld extends World {
                 break;
             }
             Goal newGoal = new Goal(incrementAndGetID(), newX, newY, newZ, p.rotate, p.color.toString(), incrementAndGetOrder());
-            this.allItems.add(newGoal);
+            selected.add(newGoal);
+            allItems.add(newGoal);
         }
     }
 
@@ -197,7 +188,7 @@ public class RobotWorld extends World {
             selected.forEach(b -> ((Point) b).color = Color.fromString(colorstr));
         } else {
             Set<Item> extremePoints = extremePoints(dir, selected);
-            this.allItems.addAll(extremePoints.stream().map(c -> {
+            allItems.addAll(extremePoints.stream().map(c -> {
                 Point d = ((Point) c).copy(dir);
                 return new Point(incrementAndGetID(), d.x, d.y, d.z, d.rotate, colorstr);
             }).collect(Collectors.toList()));
@@ -207,13 +198,13 @@ public class RobotWorld extends World {
     // Add goal position in coordinate system
     public void add(String colorstr, int x, int y, int z) {
         Point newPoint = new Point(incrementAndGetID(), x, y, z, Quaternion.ZERO, colorstr);
-        this.allItems.add(newPoint);
+        allItems.add(newPoint);
     }
 
     // Set obstacle position in coordinate system
     public void block(int x, int y, int z) {
         Obstacle newObstacle = new Obstacle(incrementAndGetID(), x, y, z, Quaternion.ZERO, "red");
-        this.allItems.add(newObstacle);
+        allItems.add(newObstacle);
     }
 
     // Goto position of certain color
@@ -229,8 +220,9 @@ public class RobotWorld extends World {
         if (dest == null) {
             return;
         }
-        dest.names.add("S");
         Goal goal = new Goal(incrementAndGetID(), dest.x, dest.y, dest.z, dest.rotate, dest.color.toString(), incrementAndGetOrder());
+        selected.clear();
+        selected.add(goal);
         allItems.add(goal);
     }
 
@@ -257,7 +249,7 @@ public class RobotWorld extends World {
                 double yDiff = start.y + i * (dest.y - start.y) / increment;
                 double zDiff = start.z + i * (dest.z - start.z) / increment;
                 Point mid = new Point(0, (int)Math.round(xDiff), (int)Math.round(yDiff), (int)Math.round(zDiff), Quaternion.ZERO, "black");
-                this.allItems.add(mid);
+                allItems.add(mid);
             }
         });
     }
@@ -292,7 +284,7 @@ public class RobotWorld extends World {
             return b;
         }).collect(Collectors.toSet());
 
-        this.allItems.addAll(selectors);
+        allItems.addAll(selectors);
 
         Set<Item> actual = allItems.stream().filter(c -> selectors.contains(c)).collect(Collectors.toSet());
 

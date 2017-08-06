@@ -25,7 +25,6 @@
 # primitive actions
 (rule $Action (add $Color) (lambda c (: @add (var c) here)) (anchored 1))
 (rule $Action (add $Color $Direction) (lambda c (lambda d (: @add (var c) (var d)))) (anchored 1))
-(rule $Action (move $Direction) (lambda d (: @move (var d))) (anchored 1))
 
 # primitive actions with arguments
 (rule $Action (add $Color $Number $Number $Number) (lambda w (lambda x (lambda y (lambda z (: @add (var w) (var x) (var y) (var z)))))) (anchored 1))
