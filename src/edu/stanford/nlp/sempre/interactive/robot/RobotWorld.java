@@ -226,6 +226,11 @@ public class RobotWorld extends World {
         allItems.add(goal);
     }
 
+    // Goto position of specific rigidbody
+    public void gotoOptitrack(int number) {
+        jedis.publish("nrc-optitrack", str(number));
+    }
+
     // Goto goal block with linear trajectory
     // Takes in color string of destination block
     public void lgoto(String colorstr, Set<Item> selected) {
@@ -304,6 +309,7 @@ public class RobotWorld extends World {
 
     public void send() {
         jedis.publish("nrc-world-state", toJSON());
+        jedis.publish("nrc-optitrack", "start");
     }
 
     @Override

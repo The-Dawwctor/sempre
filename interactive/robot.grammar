@@ -7,6 +7,7 @@
 (def @move move)
 (def @block block)
 (def @go_to go_to)
+(def @gotoOptitrack gotoOptitrack)
 (def @lgoto lgoto)
 (def @send send)
 
@@ -33,6 +34,7 @@
 
 # trajectory generation actions
 (rule $Action (goto $Color) (lambda c (: @go_to (var c))) (anchored 1))
+(rule $Action (goto rigidbody $Number) (lambda x (: @gotoOptitrack (var x))) (anchored 1))
 (rule $Action (lgoto $Color) (lambda c (: @lgoto (var c))) (anchored 1))
 
 # cube to cube relations
