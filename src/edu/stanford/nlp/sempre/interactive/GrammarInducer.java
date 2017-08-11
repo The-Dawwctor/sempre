@@ -40,7 +40,7 @@ public class GrammarInducer {
     @Option(gloss = "verbose")
     public int verbose = 0;
     @Option(gloss = "cats that never overlaps, and always save to replace")
-    public List<String> simpleCats = Lists.newArrayList("$Color", "$Number", "$Direction");
+    public List<String> simpleCats = Lists.newArrayList("$Color", "$Number", "$Direction", "$String");
     @Option(gloss = "use best packing")
     public boolean useBestPacking = true;
     @Option(gloss = "use simple packing")

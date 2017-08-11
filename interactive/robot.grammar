@@ -8,7 +8,8 @@
 (def @block block)
 (def @go_to go_to)
 (def @gotoOptitrack gotoOptitrack)
-(def @lgoto lgoto)
+(def @rotateLocal rotateLocal)
+(def @rotateGlobal rotateGlobal)
 (def @send send)
 
 # syntactic sugar
@@ -35,7 +36,10 @@
 # trajectory generation actions
 (rule $Action (goto $Color) (lambda c (: @go_to (var c))) (anchored 1))
 (rule $Action (goto rigidbody $Number) (lambda x (: @gotoOptitrack (var x))) (anchored 1))
-(rule $Action (lgoto $Color) (lambda c (: @lgoto (var c))) (anchored 1))
+
+# rotation actions
+(rule $Action (rotate local $String axis $Number degrees) (lambda s (lambda n (: @rotateLocal (var s) (var n)))) (anchored 1))
+(rule $Action (rotate global $String axis $Number degrees) (lambda s (lambda n (: @rotateGlobal (var s) (var n)))) (anchored 1))
 
 # cube to cube relations
 (rule $Set ($Direction of $Set) (lambda d (lambda s

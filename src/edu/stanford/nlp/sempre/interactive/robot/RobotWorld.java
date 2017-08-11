@@ -83,7 +83,6 @@ public class RobotWorld extends World {
         this.selected = pointset.stream().filter(b -> ((Point) b).names.contains(SELECT)).collect(Collectors.toSet());
         this.selected.forEach(i -> i.names.remove(SELECT));
         this.jedis = new Jedis("localhost", 6379);
-        this.jedis.select(1);
         setStartNums();
     }
 
@@ -91,7 +90,6 @@ public class RobotWorld extends World {
     // only use names S to communicate with client, internally it's just select variable
     @Override
     public String toJSON() {
-        // JSON code
         return Json.writeValueAsStringHard(allItems.stream().map(c -> {
             Point b = (Point) c;
             if (selected.contains(b)) {
@@ -228,35 +226,28 @@ public class RobotWorld extends World {
 
     // Goto position of specific rigidbody
     public void gotoOptitrack(int number) {
-        jedis.publish("nrc-optitrack", str(number));
+        jedis.publish("nrc-optitrack", String.valueOf(number));
     }
 
-    // Goto goal block with linear trajectory
-    // Takes in color string of destination block
-    public void lgoto(String colorstr, Set<Item> selected) {
-        Point oldDest = null;
-        for (Item c : allItems) {
-            Point choice = (Point) c;
-            if (choice.color.toString().equals(colorstr)) {
-                oldDest = choice;
-            }
+    public void rotateLocal(String axis, double theta, Set<Item> selected) {
+        rotate(axis, true, theta, selected);
+    }
+
+    public void rotateGlobal(String axis, double theta, Set<Item> selected) {
+        rotate(axis, false, theta, selected);
+    }
+
+    // Rotate current point
+    private void rotate(String axis, boolean local, double theta, Set<Item> selected) {
+        Goal goal = null;
+        for (Item i : selected) {
+            Point p = (Point) i;
+            goal = new Goal(incrementAndGetID(), p.x, p.y, p.z, p.rotate, p.color.toString(), incrementAndGetOrder());
+            goal.rotatePoint(axis, local, theta);
         }
-        // Going to nonexistent color in world
-        if (oldDest == null) {
-            return;
-        }
-        final Point dest = oldDest;
-        selected.forEach(b -> {
-            Point start = (Point) b;
-            double increment = 16;
-            for (int i = 0; i < increment; i++) {
-                double xDiff = start.x + i * (dest.x - start.x) / increment;
-                double yDiff = start.y + i * (dest.y - start.y) / increment;
-                double zDiff = start.z + i * (dest.z - start.z) / increment;
-                Point mid = new Point(0, (int)Math.round(xDiff), (int)Math.round(yDiff), (int)Math.round(zDiff), Quaternion.ZERO, "black");
-                allItems.add(mid);
-            }
-        });
+        selected.clear();
+        selected.add(goal);
+        allItems.add(goal);
     }
 
     // Get points at extreme positions
