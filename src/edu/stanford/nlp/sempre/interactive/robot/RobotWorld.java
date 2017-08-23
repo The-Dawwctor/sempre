@@ -229,6 +229,34 @@ public class RobotWorld extends World {
         jedis.publish("nrc-optitrack", String.valueOf(number));
     }
 
+    // Goto goal block with linear trajectory
+    public void lgoto(String colorstr, Set<Item> selected) {
+        Color col = Color.fromString(colorstr);
+        Point oldDest = null;
+        for (Item c : allItems) {
+            Point choice = (Point) c;
+            if (choice.color.toString().equals(colorstr)) {
+                oldDest = choice;
+            }
+        }
+        // Going to nonexistent color in world
+        if (oldDest == null) {
+            return;
+        }
+        Point dest = oldDest;
+        selected.forEach(b -> {
+            Point start = (Point) b;
+            double increment = 16;
+            for (int i = 0; i < increment; i++) {
+                double xDiff = start.x + i * (dest.x - start.x) / increment;
+                double yDiff = start.y + i * (dest.y - start.y) / increment;
+                double zDiff = start.z + i * (dest.z - start.z) / increment;
+                Point mid = new Point(0, (int)Math.round(xDiff), (int)Math.round(yDiff), (int)Math.round(zDiff), Quaternion.ZERO, "black");
+                this.allItems.add(mid);
+            }
+        });
+    }
+
     public void rotateLocal(String axis, double theta, Set<Item> selected) {
         rotate(axis, true, theta, selected);
     }
