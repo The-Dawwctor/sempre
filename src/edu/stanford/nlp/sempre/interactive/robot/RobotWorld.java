@@ -218,7 +218,8 @@ public class RobotWorld extends World {
         if (dest == null) {
             return;
         }
-        Goal goal = new Goal(incrementAndGetID(), dest.x, dest.y, dest.z, dest.rotate, dest.color.toString(), incrementAndGetOrder());
+        Goal goal = new Goal(incrementAndGetID(), dest.x, dest.y, dest.z,
+            dest.rotate, dest.color.toString(), incrementAndGetOrder());
         selected.clear();
         selected.add(goal);
         allItems.add(goal);
@@ -247,14 +248,20 @@ public class RobotWorld extends World {
         selected.forEach(b -> {
             Point start = (Point) b;
             double increment = 16;
-            for (int i = 0; i < increment; i++) {
+            for (int i = 1; i < increment; i++) {
                 double xDiff = start.x + i * (dest.x - start.x) / increment;
                 double yDiff = start.y + i * (dest.y - start.y) / increment;
                 double zDiff = start.z + i * (dest.z - start.z) / increment;
-                Point mid = new Point(0, (int)Math.round(xDiff), (int)Math.round(yDiff), (int)Math.round(zDiff), Quaternion.ZERO, "black");
+                Goal mid = new Goal(incrementAndGetID(), (int)Math.round(xDiff), (int)Math.round(yDiff), (int)Math.round(zDiff),
+                    Quaternion.ZERO, "black", incrementAndGetOrder());
                 this.allItems.add(mid);
             }
         });
+        Goal goal = new Goal(incrementAndGetID(), dest.x, dest.y, dest.z,
+            dest.rotate, dest.color.toString(), incrementAndGetOrder());
+        selected.clear();
+        selected.add(goal);
+        this.allItems.add(goal);
     }
 
     public void rotateLocal(String axis, double theta, Set<Item> selected) {
