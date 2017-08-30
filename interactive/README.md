@@ -33,7 +33,7 @@ Code for the client at `https://github.com/The-Dawwctor/shrdlurn-robot`. See its
 
         ./interactive/run @mode=robot -server -interactive
 
-  things in the core language such as `goal 1 2 3`, `block 2 4 6` should work.
+  things in the core language such as `add red 1 2 3`, `block 2 4 6` should work.
 
 ### Interacting with the server
 

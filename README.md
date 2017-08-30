@@ -80,7 +80,8 @@ You must have the following already installed on your system.
 
 - Java 8 (not 7)
 
-Additionally, run this command to install further dependencies
+Additionally, run this command to install further dependencies:
+
     sudo apt-get install ant ruby wget make
 
 In order to run ant interactive and utilize the Quaternion class for Java, go to
